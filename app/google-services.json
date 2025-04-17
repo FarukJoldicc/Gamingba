@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "469366688301",
+    "project_id": "gamingba-e4849",
+    "storage_bucket": "gamingba-e4849.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:469366688301:android:62f18adea9af07e6ef86a4",
+        "android_client_info": {
+          "package_name": "com.faruk.gamingba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvKcTPNNEQIloBRdGKeoqxAf6fZi6B1xs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
