@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Gaming.ba</string>
+    <string name="logo">Gaming.ba Logo</string>
+    <string name="login_prompt">I already have an account? <font color="@color/button_cyan">Login</font></string>
 </resources>
