@@ -4,5 +4,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="primary">#4CAF50</color>
     <color name="gray">#BDBDBD</color>
-    <color name="button_cyan">#00FFFF</color>
+    <color name="button_cyan">#00CED1</color>
+    <color name="background_color">#0D0C1D</color>
 </resources>

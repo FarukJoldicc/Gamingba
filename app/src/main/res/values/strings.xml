@@ -2,4 +2,9 @@
     <string name="app_name">Gaming.ba</string>
     <string name="logo">Gaming.ba Logo</string>
     <string name="login_prompt">I already have an account? <font color="@color/button_cyan">Login</font></string>
+    <string name="sign_up">Sign Up</string>
+    <string name="or_sign_up_with">Or Sign up with</string>
+    <string name="password">Password</string>
+    <string name="email_address">Email Address</string>
+    <string name="register_now">Register now!</string>
 </resources>
