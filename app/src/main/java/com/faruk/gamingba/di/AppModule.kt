@@ -2,6 +2,7 @@ package com.faruk.gamingba.di
 
 import com.faruk.gamingba.model.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,4 +16,12 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseDatabase(): FirebaseDatabase {
+        val database = FirebaseDatabase.getInstance()
+        database.setPersistenceEnabled(true)
+        return database
+    }
 }
