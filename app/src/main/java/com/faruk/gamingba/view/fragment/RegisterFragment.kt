@@ -9,6 +9,10 @@ import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.text.method.PasswordTransformationMethod
+import android.text.method.HideReturnsTransformationMethod
+import android.widget.EditText
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -42,11 +46,53 @@ class RegisterFragment : Fragment() {
         setupClickListeners()
         setupLoginText()
         observeViewModel()
+        
+        // Set up password visibility toggle
+        val passwordToggle = view.findViewById<ImageView>(R.id.passwordToggle)
+        val passwordEditText = view.findViewById<EditText>(R.id.passwordEditText)
+        
+        var isPasswordVisible = false
+        
+        passwordToggle.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            
+            if (isPasswordVisible) {
+                // Show password
+                passwordEditText.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                passwordToggle.setImageResource(R.drawable.ic_password_toggle_off)
+            } else {
+                // Hide password
+                passwordEditText.transformationMethod = PasswordTransformationMethod.getInstance()
+                passwordToggle.setImageResource(R.drawable.ic_password_toggle)
+            }
+            
+            // Keep cursor at the end of text
+            passwordEditText.setSelection(passwordEditText.text.length)
+        }
     }
 
     private fun setupDataBinding() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
+        
+        // Observe LiveData values to update EditText fields
+        viewModel.firstNameLiveData.observe(viewLifecycleOwner) { firstName ->
+            if (binding.firstNameEditText.text.toString() != firstName) {
+                binding.firstNameEditText.setText(firstName)
+            }
+        }
+        
+        viewModel.emailLiveData.observe(viewLifecycleOwner) { email ->
+            if (binding.emailEditText.text.toString() != email) {
+                binding.emailEditText.setText(email)
+            }
+        }
+        
+        viewModel.passwordLiveData.observe(viewLifecycleOwner) { password ->
+            if (binding.passwordEditText.text.toString() != password) {
+                binding.passwordEditText.setText(password)
+            }
+        }
     }
 
     private fun setupTextWatchers() {
