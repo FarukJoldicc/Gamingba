@@ -1,27 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
         <import type="com.faruk.gamingba.viewmodel.AuthViewModel" />
-
         <variable
             name="viewModel"
             type="AuthViewModel" />
     </data>
 
-    <ScrollView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#0D0C1D"
-        android:fillViewport="true">
+        android:background="@color/background_color">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:padding="32dp">
+            android:padding="24dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintVertical_bias="0.3">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -30,7 +34,7 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="220dp"
+                    android:layout_width="200dp"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="0dp"
                     android:adjustViewBounds="true"
@@ -40,26 +44,68 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-50dp"
+                    android:layout_marginTop="-40dp"
                     android:gravity="center"
                     android:text="@string/register_now"
                     android:textColor="#AAAAAA"
                     android:textSize="14sp" />
             </LinearLayout>
 
-            <!-- Email Field -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/emailInputLayout"
+                android:id="@+id/firstNameInputLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="2dp"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusBottomEnd="30dp"
                 app:boxCornerRadiusBottomStart="30dp"
                 app:boxCornerRadiusTopEnd="30dp"
                 app:boxCornerRadiusTopStart="30dp"
                 app:hintEnabled="true"
+                app:errorEnabled="true"
+                app:errorIconDrawable="@null"
+                app:boxStrokeErrorColor="#FF4444"
+                android:hint="@string/first_name">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/firstNameEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:textColor="@android:color/white"
+                    android:textColorHint="#888888"
+                    app:bindText="@{viewModel.firstNameLiveData}"
+                    app:onTextChanged="@{viewModel::setFirstName}" />
+
+                <TextView
+                    android:id="@+id/firstNameErrorText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="-18dp"
+                    android:text="@{viewModel.firstNameError}"
+                    android:textColor="#FF4444"
+                    android:textSize="12sp"
+                    android:visibility="@{viewModel.firstNameError != null ? android.view.View.VISIBLE : android.view.View.GONE}" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/emailInputLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="30dp"
+                app:boxCornerRadiusBottomStart="30dp"
+                app:boxCornerRadiusTopEnd="30dp"
+                app:boxCornerRadiusTopStart="30dp"
+                app:hintEnabled="true"
+                app:errorEnabled="true"
+                app:errorIconDrawable="@null"
+                app:boxStrokeErrorColor="#FF4444"
                 android:hint="@string/email_address">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -69,15 +115,28 @@
                     android:inputType="textEmailAddress"
                     android:textColor="@android:color/white"
                     android:textColorHint="#888888"
-                    app:bindText="@{viewModel.email}" />
+                    app:bindText="@{viewModel.emailLiveData}"
+                    app:onTextChanged="@{viewModel::setEmail}" />
+
+                <TextView
+                    android:id="@+id/emailErrorText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="-18dp"
+                    android:text="@{viewModel.emailError}"
+                    android:textColor="#FF4444"
+                    android:textSize="12sp"
+                    android:visibility="@{viewModel.emailError != null ? android.view.View.VISIBLE : android.view.View.GONE}" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Password Field -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/passwordInputLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="2dp"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusBottomEnd="30dp"
                 app:boxCornerRadiusBottomStart="30dp"
@@ -85,6 +144,9 @@
                 app:boxCornerRadiusTopStart="30dp"
                 app:endIconMode="password_toggle"
                 app:hintEnabled="true"
+                app:errorEnabled="true"
+                app:errorIconDrawable="@null"
+                app:boxStrokeErrorColor="#FF4444"
                 android:hint="@string/password">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -94,32 +156,49 @@
                     android:inputType="textPassword"
                     android:textColor="@android:color/white"
                     android:textColorHint="#888888"
-                    app:bindText="@{viewModel.password}" />
+                    app:bindText="@{viewModel.passwordLiveData}"
+                    app:onTextChanged="@{viewModel::setPassword}" />
+
+                <TextView
+                    android:id="@+id/passwordErrorText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="-18dp"
+                    android:text="@{viewModel.passwordError}"
+                    android:textColor="#FF4444"
+                    android:textSize="12sp"
+                    android:visibility="@{viewModel.passwordError != null ? android.view.View.VISIBLE : android.view.View.GONE}" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/registerButton"
                 android:layout_width="match_parent"
                 android:layout_height="65dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="12dp"
                 android:backgroundTint="@color/button_cyan"
                 android:text="@string/sign_up"
                 android:textAllCaps="false"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/white"
+                android:enabled="@{!viewModel.isLoading}"
+                android:onClick="onRegisterButtonClick" />
 
             <TextView
                 android:id="@+id/goToLoginButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/login_prompt"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -156,15 +235,26 @@
                     android:layout_marginEnd="16dp"
                     android:background="@drawable/circle_white"
                     android:padding="12dp"
-                    android:src="@drawable/ic_google" />
+                    android:src="@drawable/ic_google"
+                    android:contentDescription="Google Sign Up" />
 
                 <ImageView
                     android:layout_width="70dp"
                     android:layout_height="70dp"
                     android:background="@drawable/circle_facebook"
                     android:padding="12dp"
-                    android:src="@drawable/ic_facebook" />
+                    android:src="@drawable/ic_facebook"
+                    android:contentDescription="Facebook Sign Up" />
             </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="@{viewModel.isLoading ? android.view.View.VISIBLE : android.view.View.GONE}"
+                android:indeterminateTint="@color/button_cyan" />
+
         </LinearLayout>
-    </ScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
