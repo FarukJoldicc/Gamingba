@@ -22,6 +22,13 @@ import com.faruk.gamingba.databinding.FragmentRegisterBinding
 import com.faruk.gamingba.model.state.RegistrationState
 import com.faruk.gamingba.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import android.content.Intent
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
@@ -29,6 +36,8 @@ class RegisterFragment : Fragment() {
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
     private val viewModel: AuthViewModel by viewModels()
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private val RC_SIGN_IN = 1001
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +55,7 @@ class RegisterFragment : Fragment() {
         setupClickListeners()
         setupLoginText()
         observeViewModel()
+        setupGoogleSignIn()
         
         // Set up password visibility toggle
         val passwordToggle = view.findViewById<ImageView>(R.id.passwordToggle)
@@ -68,6 +78,38 @@ class RegisterFragment : Fragment() {
             
             // Keep cursor at the end of text
             passwordEditText.setSelection(passwordEditText.text.length)
+        }
+    }
+
+    private fun setupGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
+
+        binding.googleSignInButton.setOnClickListener {
+            // Sign out before starting new sign-in flow
+            googleSignInClient.signOut().addOnCompleteListener {
+                val signInIntent = googleSignInClient.signInIntent
+                startActivityForResult(signInIntent, RC_SIGN_IN)
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account?.idToken?.let { idToken ->
+                    viewModel.signInWithGoogle(idToken)
+                }
+            } catch (e: ApiException) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -166,6 +208,13 @@ class RegisterFragment : Fragment() {
         viewModel.navigateToLogin.observe(viewLifecycleOwner) { shouldNavigate ->
             if (shouldNavigate) {
                 findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                viewModel.onNavigationHandled()
+            }
+        }
+
+        viewModel.navigateToHome.observe(viewLifecycleOwner) { shouldNavigate ->
+            if (shouldNavigate) {
+                findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
                 viewModel.onNavigationHandled()
             }
         }

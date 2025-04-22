@@ -62,6 +62,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.database.ktx)
+    implementation(libs.play.services.auth)
     
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.fragment.ktx)
@@ -72,4 +73,7 @@ dependencies {
     implementation (libs.androidx.navigation.ui.ktx)
     implementation(libs.hilt.android)
     implementation (libs.material.vlatestversion)
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }

@@ -18,6 +18,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.faruk.gamingba.model.state.RegistrationState
 import com.faruk.gamingba.model.state.ValidationState
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -64,6 +66,9 @@ class AuthViewModel @Inject constructor(
 
     private val _navigateToRegister = MutableLiveData<Boolean>()
     val navigateToRegister: LiveData<Boolean> = _navigateToRegister
+
+    private val _navigateToHome = MutableLiveData<Boolean>()
+    val navigateToHome: LiveData<Boolean> = _navigateToHome
 
     // Error messages for each field
     private val _firstNameError = MutableLiveData<String?>()
@@ -284,6 +289,7 @@ class AuthViewModel @Inject constructor(
     fun onNavigationHandled() {
         _navigateToLogin.value = false
         _navigateToRegister.value = false
+        _navigateToHome.value = false
     }
 
     // Updated setters with field touch tracking
@@ -306,5 +312,31 @@ class AuthViewModel @Inject constructor(
         _passwordTouched.value = true
         password.value = text
         validateInput()
+    }
+
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            isLoading.value = true
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            try {
+                val authResult = auth.signInWithCredential(credential).await()
+                val user = authResult.user
+                user?.let { firebaseUser ->
+                    val userRef = database.reference.child("users").child(firebaseUser.uid)
+                    userRef.get().addOnSuccessListener { snapshot ->
+                        if (!snapshot.exists()) {
+                            val newUser = User(firstName = firebaseUser.displayName ?: "", email = firebaseUser.email ?: "")
+                            userRef.setValue(newUser)
+                        }
+                    }
+                    _currentUser.value = firebaseUser
+                    _navigateToHome.value = true
+                }
+            } catch (e: Exception) {
+                _error.value = "Google sign-in failed. Please try again"
+            } finally {
+                isLoading.value = false
+            }
+        }
     }
 }
