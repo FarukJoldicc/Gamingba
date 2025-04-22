@@ -2,14 +2,18 @@ package com.faruk.gamingba.view.fragment
 
 import android.os.Bundle
 import android.text.Editable
+import android.text.SpannableString
+import android.text.Spanned
 import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
 import android.text.method.HideReturnsTransformationMethod
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -51,6 +55,7 @@ class LoginFragment : Fragment() {
         setupTextWatchers()
         setupClickListeners()
         setupPasswordToggle()
+        setupRegisterText()
         observeViewModel()
     }
 
@@ -93,6 +98,22 @@ class LoginFragment : Fragment() {
             // Keep cursor at the end of text
             passwordEditText.setSelection(passwordEditText.text.length)
         }
+    }
+
+    private fun setupRegisterText() {
+        val registerText = "I don't have an account yet Register"
+        val spannable = SpannableString(registerText)
+        
+        // Find the position of "Register" in the text
+        val registerStart = registerText.indexOf("Register")
+        val registerEnd = registerStart + "Register".length
+        
+        // Apply cyan color to the "Register" text
+        val cyanColor = ContextCompat.getColor(requireContext(), R.color.button_cyan)
+        spannable.setSpan(ForegroundColorSpan(cyanColor), registerStart, registerEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        
+        // Set the spannable text to the TextView
+        binding.goToRegisterButton.text = spannable
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

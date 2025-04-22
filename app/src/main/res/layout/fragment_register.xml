@@ -161,7 +161,7 @@
                             android:inputType="textEmailAddress"
                             android:textColor="@android:color/white"
                             android:textColorHint="#888888"
-                            android:hint="Tiffanyjearsey@gmail.com"
+                            android:hint="@string/email_example"
                             app:layout_constraintTop_toTopOf="@id/emailBackground"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent" />

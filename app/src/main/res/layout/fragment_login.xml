@@ -46,7 +46,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="-45dp"
                     android:gravity="center"
-                    android:text="Login to your account"
+                    android:text="@string/login_to_your_account"
                     android:textColor="#AAAAAA"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -109,7 +109,7 @@
                             android:inputType="textEmailAddress"
                             android:textColor="@android:color/white"
                             android:textColorHint="#888888"
-                            android:hint="example@gmail.com"
+                            android:hint="@string/email_example"
                             app:layout_constraintTop_toTopOf="@id/emailBackground"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent" />
@@ -178,57 +178,42 @@
                             app:layout_constraintEnd_toEndOf="@id/passwordBackground"
                             app:layout_constraintBottom_toBottomOf="@id/passwordBackground" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
+                    
+                    <!-- Forgot Password Text -->
+                    <TextView
+                        android:id="@+id/forgotPasswordTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginTop="4dp"
+                        android:text="Forgot password?"
+                        android:textColor="@color/button_cyan"
+                        android:textSize="14sp" />
                 </LinearLayout>
                 
                 <!-- Error Messages (Overlays) -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="parent">
+                    android:layout_height="wrap_content">
                     
-                    <!-- Email Error -->
+                    <!-- Login Error -->
                     <TextView
-                        android:id="@+id/emailErrorText"
+                        android:id="@+id/loginErrorTextView"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
                         android:layout_marginEnd="16dp"
-                        android:text="@{viewModel.emailError}"
+                        android:text="Incorrect password or email"
                         android:textColor="#FF4444"
                         android:textSize="12sp"
-                        android:visibility="@{viewModel.emailError != null ? android.view.View.VISIBLE : android.view.View.GONE}"
+                        android:visibility="gone"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         android:layout_marginTop="84dp" />
-                        
-                    <!-- Password Error -->
-                    <TextView
-                        android:id="@+id/passwordErrorText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="32dp"
-                        android:layout_marginEnd="16dp"
-                        android:text="@{viewModel.passwordError}"
-                        android:textColor="#FF4444"
-                        android:textSize="12sp"
-                        android:visibility="@{viewModel.passwordError != null ? android.view.View.VISIBLE : android.view.View.GONE}"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:layout_marginTop="168dp" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </FrameLayout>
-
-            <!-- Forgot Password Text -->
-            <TextView
-                android:id="@+id/forgotPasswordText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="12dp"
-                android:text="Forgot password?"
-                android:textColor="@color/button_cyan"
-                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/loginButton"
@@ -240,15 +225,14 @@
                 android:text="Login"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
-                android:enabled="@{!viewModel.isLoading}"
-                android:onClick="onLoginButtonClick" />
+                android:enabled="@{!viewModel.isLoading}" />
 
             <TextView
                 android:id="@+id/goToRegisterButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="@string/login_prompt"
+                android:text="@string/dont_have_an_account_yet_register"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp" />
 
@@ -298,6 +282,7 @@
                     android:contentDescription="Google Sign In" />
 
                 <ImageView
+                    android:id="@+id/facebookSignInButton"
                     android:layout_width="65dp"
                     android:layout_height="65dp"
                     android:background="@drawable/circle_facebook"
@@ -305,15 +290,19 @@
                     android:src="@drawable/ic_facebook"
                     android:contentDescription="Facebook Sign In" />
             </LinearLayout>
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:visibility="@{viewModel.isLoading ? android.view.View.VISIBLE : android.view.View.GONE}"
-                android:indeterminateTint="@color/button_cyan" />
-
         </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="@{viewModel.isLoading ? android.view.View.VISIBLE : android.view.View.GONE}"
+            android:indeterminateTint="@color/button_cyan"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
