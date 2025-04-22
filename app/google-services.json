@@ -13,7 +13,20 @@
           "package_name": "com.faruk.gamingba"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "469366688301-pfce0vacj0sb0eqe2q70pcf37e2rhu6p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.faruk.gamingba",
+            "certificate_hash": "1c4c9d003950185e46f6833a7d51a65e297a6c70"
+          }
+        },
+        {
+          "client_id": "469366688301-jmokl381cv3eokv4ofjq8cch77eajodr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBvKcTPNNEQIloBRdGKeoqxAf6fZi6B1xs"
@@ -21,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "469366688301-jmokl381cv3eokv4ofjq8cch77eajodr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

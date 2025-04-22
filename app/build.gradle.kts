@@ -73,4 +73,7 @@ dependencies {
     implementation (libs.androidx.navigation.ui.ktx)
     implementation(libs.hilt.android)
     implementation (libs.material.vlatestversion)
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }
