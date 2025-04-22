@@ -22,6 +22,13 @@ import com.faruk.gamingba.databinding.FragmentRegisterBinding
 import com.faruk.gamingba.model.state.RegistrationState
 import com.faruk.gamingba.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import android.content.Intent
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
