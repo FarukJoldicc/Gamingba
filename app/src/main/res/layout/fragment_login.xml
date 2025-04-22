@@ -185,8 +185,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginEnd="25dp"
+                        android:layout_marginTop="-10dp"
                         android:text="Forgot password?"
                         android:textColor="@color/button_cyan"
                         android:textSize="14sp" />
@@ -222,7 +222,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp"
                 android:backgroundTint="@color/button_cyan"
-                android:text="Login"
+                android:text="@string/login_button"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:enabled="@{!viewModel.isLoading}" />
@@ -232,7 +232,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="@string/dont_have_an_account_yet_register"
+                android:text="@string/don_t_have_an_account_yet_register"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp" />
 

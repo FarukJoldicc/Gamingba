@@ -13,5 +13,6 @@
     <string name="default_web_client_id">469366688301-pfce0vacj0sb0eqe2q70pcf37e2rhu6p.apps.googleusercontent.com</string>
     <string name="login_to_your_account">Login to your account!</string>
     <string name="email_example">Tiffanyjearsey@gmail.com</string>
-    <string name="dont_have_an_account_yet_register">Don\'t have an account yet? Register</string>
+    <string name="don_t_have_an_account_yet_register">Don\'t have an account yet? Register</string>
+    <string name="login_button">Login</string>
 </resources>
