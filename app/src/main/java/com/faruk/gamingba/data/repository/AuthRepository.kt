@@ -1,7 +1,9 @@
 package com.faruk.gamingba.data.repository
 
+import android.util.Log
 import com.faruk.gamingba.model.data.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -23,7 +25,8 @@ class AuthRepository @Inject constructor(
             database.reference.child("users").child(result.user?.uid ?: "").setValue(user).await()
             Result.success(user)
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("AuthRepository", "Registration failed: ${e.message}")
+            Result.failure(Exception("Registration failed"))
         }
     }
 
@@ -33,8 +36,12 @@ class AuthRepository @Inject constructor(
             val snapshot = database.reference.child("users").child(result.user?.uid ?: "").get().await()
             val user = snapshot.getValue(User::class.java) ?: throw Exception("User data not found")
             Result.success(user)
+        } catch (e: FirebaseAuthException) {
+            Log.e("AuthRepository", "Login failed: ${e.message}")
+            Result.failure(Exception("Login failed"))
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("AuthRepository", "Login failed: ${e.message}")
+            Result.failure(Exception("Login failed"))
         }
     }
 

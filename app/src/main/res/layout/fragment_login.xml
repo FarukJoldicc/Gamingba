@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="android.view.View"/>
         <variable
             name="viewModel"
             type="com.faruk.gamingba.viewmodel.AuthViewModel" />
@@ -56,12 +57,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 
-                <!-- Fields Container (fixed layout) -->
+                <!-- Main Content -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    
+
                     <!-- Email Field -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -191,28 +192,22 @@
                         android:textColor="@color/button_cyan"
                         android:textSize="14sp" />
                 </LinearLayout>
-                
-                <!-- Error Messages (Overlays) -->
-                <androidx.constraintlayout.widget.ConstraintLayout
+
+                <!-- Error Message Overlay -->
+                <TextView
+                    android:id="@+id/loginErrorTextView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-                    
-                    <!-- Login Error -->
-                    <TextView
-                        android:id="@+id/loginErrorTextView"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="32dp"
-                        android:layout_marginEnd="16dp"
-                        android:text="Incorrect password or email"
-                        android:textColor="#FF4444"
-                        android:textSize="12sp"
-                        android:visibility="gone"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:layout_marginTop="84dp" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginTop="-4dp"
+                    android:layout_marginBottom="-15dp"
+                    android:gravity="center"
+                    android:textColor="@color/error_color"
+                    android:textSize="12sp"
+                    android:visibility="@{viewModel.loginError != null ? View.VISIBLE : View.GONE}"
+                    android:text="@{viewModel.loginError}"
+                    tools:text="You have entered an incorrect email address or password" />
             </FrameLayout>
 
             <Button

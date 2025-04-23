@@ -101,7 +101,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupRegisterText() {
-        val registerText = "I don't have an account yet Register"
+        val registerText = getString(R.string.don_t_have_an_account_yet_register)
         val spannable = SpannableString(registerText)
         
         // Find the position of "Register" in the text
