@@ -10,6 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import com.google.firebase.auth.FirebaseAuth
 import com.faruk.gamingba.model.data.User
@@ -260,32 +262,40 @@ class AuthViewModel @Inject constructor(
 
     fun register(email: String, password: String, firstName: String) {
         Log.d("AuthViewModel", "Starting registration process")
-        viewModelScope.launch {
-            _registrationState.value = RegistrationState.Loading
-            _error.value = null
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = repository.register(email, password, firstName)
-                result.onSuccess {
-                    Log.d("AuthViewModel", "Registration successful")
-                    _registrationState.value = RegistrationState.Success
-                    // Navigate to login after successful registration
-                    _navigateToLogin.value = true
-                }.onFailure {
-                    Log.e("AuthViewModel", "Registration failed: ${it.message}")
-                    val errorMessage = when {
-                        it.message?.contains("email") == true -> "This email is already registered"
-                        it.message?.contains("password") == true -> "Password is too weak"
-                        it.message?.contains("network") == true -> "Network error. Please check your connection"
-                        else -> "Registration failed. Please try again"
+                _registrationState.postValue(RegistrationState.Loading)
+                _error.postValue(null)
+                
+                withContext(Dispatchers.IO) {
+                    val result = repository.register(email, password, firstName)
+                    result.onSuccess {
+                        Log.d("AuthViewModel", "Registration successful")
+                        withContext(Dispatchers.Main) {
+                            _registrationState.value = RegistrationState.Success
+                            _navigateToLogin.value = true
+                        }
+                    }.onFailure {
+                        Log.e("AuthViewModel", "Registration failed: ${it.message}")
+                        val errorMessage = when {
+                            it.message?.contains("email") == true -> "This email is already registered"
+                            it.message?.contains("password") == true -> "Password is too weak"
+                            it.message?.contains("network") == true -> "Network error. Please check your connection"
+                            else -> "Registration failed. Please try again"
+                        }
+                        withContext(Dispatchers.Main) {
+                            _registrationState.value = RegistrationState.Error(errorMessage)
+                            _error.value = errorMessage
+                        }
                     }
-                    _registrationState.value = RegistrationState.Error(errorMessage)
-                    _error.value = errorMessage
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Registration exception: ${e.message}")
                 val errorMessage = "An unexpected error occurred. Please try again"
-                _registrationState.value = RegistrationState.Error(errorMessage)
-                _error.value = errorMessage
+                withContext(Dispatchers.Main) {
+                    _registrationState.value = RegistrationState.Error(errorMessage)
+                    _error.value = errorMessage
+                }
             }
         }
     }
@@ -367,5 +377,9 @@ class AuthViewModel @Inject constructor(
                 isLoading.value = false
             }
         }
+    }
+
+    fun setLoginError(message: String) {
+        _loginError.value = message
     }
 }

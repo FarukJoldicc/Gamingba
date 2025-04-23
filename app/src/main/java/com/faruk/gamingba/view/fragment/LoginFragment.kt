@@ -29,6 +29,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
@@ -38,6 +41,9 @@ class LoginFragment : Fragment() {
     private val viewModel: AuthViewModel by viewModels()
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 1001
+
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
@@ -57,6 +63,28 @@ class LoginFragment : Fragment() {
         setupPasswordToggle()
         setupRegisterText()
         observeViewModel()
+        setupErrorHandling()
+    }
+
+    private fun setupErrorHandling() {
+        // Disable Firebase's default error handling
+        firebaseAuth.setLanguageCode("en")
+        
+        // Override the default error handler
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            when (throwable) {
+                is FirebaseAuthException -> {
+                    // Log the error but don't show it to the user
+                    Log.e("LoginFragment", "Firebase Auth Error: ${throwable.message}")
+                    // Show our custom error message instead
+                    viewModel.setLoginError("Invalid email or password")
+                }
+                else -> {
+                    Log.e("LoginFragment", "Error: ${throwable.message}")
+                    viewModel.setLoginError("An error occurred. Please try again.")
+                }
+            }
+        }
     }
 
     private fun setupGoogleSignIn() {
@@ -187,7 +215,7 @@ class LoginFragment : Fragment() {
                         findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                     } else {
                         Log.e("LoginFragment", "Login failed: ${it.exceptionOrNull()?.message}")
-                        Toast.makeText(requireContext(), it.exceptionOrNull()?.message ?: "Login failed", Toast.LENGTH_SHORT).show()
+                        // Don't show the Toast, let the error message be handled by our custom error handling
                     }
                 }
             }

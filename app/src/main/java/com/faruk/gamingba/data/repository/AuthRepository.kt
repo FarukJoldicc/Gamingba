@@ -24,9 +24,12 @@ class AuthRepository @Inject constructor(
             )
             database.reference.child("users").child(result.user?.uid ?: "").setValue(user).await()
             Result.success(user)
+        } catch (e: FirebaseAuthException) {
+            Log.e("AuthRepository", "Registration failed: ${e.message}")
+            Result.failure(Exception("Registration failed. Please try again."))
         } catch (e: Exception) {
             Log.e("AuthRepository", "Registration failed: ${e.message}")
-            Result.failure(Exception("Registration failed"))
+            Result.failure(Exception("Registration failed. Please try again."))
         }
     }
 
@@ -38,10 +41,10 @@ class AuthRepository @Inject constructor(
             Result.success(user)
         } catch (e: FirebaseAuthException) {
             Log.e("AuthRepository", "Login failed: ${e.message}")
-            Result.failure(Exception("Login failed"))
+            Result.failure(Exception("Invalid email or password"))
         } catch (e: Exception) {
             Log.e("AuthRepository", "Login failed: ${e.message}")
-            Result.failure(Exception("Login failed"))
+            Result.failure(Exception("Login failed. Please try again."))
         }
     }
 
@@ -51,11 +54,16 @@ class AuthRepository @Inject constructor(
             val snapshot = database.reference.child("users").child(userId).get().await()
             snapshot.getValue(User::class.java)
         } catch (e: Exception) {
+            Log.e("AuthRepository", "Error getting current user: ${e.message}")
             null
         }
     }
 
     suspend fun logout() {
-        auth.signOut()
+        try {
+            auth.signOut()
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error during logout: ${e.message}")
+        }
     }
 } 
