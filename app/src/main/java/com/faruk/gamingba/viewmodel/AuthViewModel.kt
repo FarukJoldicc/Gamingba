@@ -10,6 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import com.google.firebase.auth.FirebaseAuth
 import com.faruk.gamingba.model.data.User
@@ -90,8 +92,11 @@ class AuthViewModel @Inject constructor(
     private val _passwordTouched = MutableLiveData<Boolean>()
     val passwordTouched: LiveData<Boolean> = _passwordTouched
 
-    private val _formSubmitted = MutableLiveData<Boolean>()
-    val formSubmitted: LiveData<Boolean> = _formSubmitted
+    private val _formSubmitted = MutableStateFlow(false)
+    val formSubmitted: StateFlow<Boolean> = _formSubmitted
+
+    private val _loginError = MutableStateFlow<String?>(null)
+    val loginError: StateFlow<String?> = _loginError
 
     init {
         _currentUser.value = repository.getCurrentUser()
@@ -122,10 +127,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun validatePassword(password: String): Boolean {
-        return password.length >= 6 && 
-               password.any { it.isDigit() } && 
-               password.any { it.isUpperCase() } && 
-               password.any { it.isLowerCase() }
+        return password.length >= 6
     }
 
     private fun validateFirstName(firstName: String): Boolean {
@@ -181,12 +183,72 @@ class AuthViewModel @Inject constructor(
         return state
     }
 
+    fun validateForm(): Boolean {
+        _formSubmitted.value = true
+        var isValid = true
+
+        // Clear previous errors
+        _emailError.value = null
+        _passwordError.value = null
+        _loginError.value = null
+
+        // Validate email
+        if (email.value.isEmpty()) {
+            _emailError.value = "Email is required"
+            isValid = false
+        } else if (!validateEmail(email.value)) {
+            _emailError.value = "Please enter a valid email address"
+            isValid = false
+        }
+
+        // Validate password
+        if (password.value.isEmpty()) {
+            _passwordError.value = "Password is required"
+            isValid = false
+        } else if (!validatePassword(password.value)) {
+            _passwordError.value = "Password must be at least 6 characters"
+            isValid = false
+        }
+
+        return isValid
+    }
+
+    private fun login(email: String, password: String) {
+        viewModelScope.launch {
+            Log.d("AuthViewModel", "Starting login process")
+            isLoading.value = true
+            _loginError.value = null
+            try {
+                val result = repository.login(email, password)
+                _authResult.value = result
+                if (result.isSuccess) {
+                    Log.d("AuthViewModel", "Login successful")
+                    _currentUser.value = repository.getCurrentUser()
+                    fetchUserData()
+                } else {
+                    _loginError.value = "You have entered an incorrect email address or password"
+                }
+            } catch (e: Exception) {
+                // Log the actual error for debugging
+                Log.e("AuthViewModel", "Login exception: ${e.message}")
+                // Show user-friendly message instead of the actual error
+                _loginError.value = "You have entered an incorrect email address or password"
+            } finally {
+                isLoading.value = false
+            }
+        }
+    }
+
     fun onLoginClicked() {
-        if (!validateInput(includeFirstName = false).isValid) {
-            _error.value = _validationState.value?.errors?.firstOrNull() ?: "Invalid input"
+        if (email.value.isEmpty() || password.value.isEmpty()) {
+            _loginError.value = "Please enter both email and password"
             return
         }
-        login(email.value, password.value)
+        try {
+            login(email.value, password.value)
+        } catch (e: Exception) {
+            _loginError.value = "You have entered an incorrect email address or password"
+        }
     }
 
     fun onRegisterClicked() {
@@ -198,65 +260,42 @@ class AuthViewModel @Inject constructor(
         register(email.value, password.value, firstNameInput.value)
     }
 
-    private fun login(email: String, password: String) {
-        viewModelScope.launch {
-            Log.d("AuthViewModel", "Starting login process")
-            isLoading.value = true
-            _error.value = null
-            try {
-                val result = repository.login(email, password)
-                _authResult.value = result
-                if (result.isSuccess) {
-                    Log.d("AuthViewModel", "Login successful")
-                    _currentUser.value = repository.getCurrentUser()
-                    fetchUserData()
-                } else {
-                    val errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
-                    Log.e("AuthViewModel", "Login failed: $errorMessage")
-                    _error.value = when {
-                        errorMessage.contains("password") -> "Invalid password"
-                        errorMessage.contains("email") -> "Invalid email address"
-                        errorMessage.contains("user") -> "No account found with this email"
-                        else -> "Login failed. Please try again"
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("AuthViewModel", "Login exception: ${e.message}")
-                _error.value = "An unexpected error occurred. Please try again"
-            } finally {
-                isLoading.value = false
-            }
-        }
-    }
-
     fun register(email: String, password: String, firstName: String) {
         Log.d("AuthViewModel", "Starting registration process")
-        viewModelScope.launch {
-            _registrationState.value = RegistrationState.Loading
-            _error.value = null
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = repository.register(email, password, firstName)
-                result.onSuccess {
-                    Log.d("AuthViewModel", "Registration successful")
-                    _registrationState.value = RegistrationState.Success
-                    // Navigate to login after successful registration
-                    _navigateToLogin.value = true
-                }.onFailure {
-                    Log.e("AuthViewModel", "Registration failed: ${it.message}")
-                    val errorMessage = when {
-                        it.message?.contains("email") == true -> "This email is already registered"
-                        it.message?.contains("password") == true -> "Password is too weak"
-                        it.message?.contains("network") == true -> "Network error. Please check your connection"
-                        else -> "Registration failed. Please try again"
+                _registrationState.postValue(RegistrationState.Loading)
+                _error.postValue(null)
+                
+                withContext(Dispatchers.IO) {
+                    val result = repository.register(email, password, firstName)
+                    result.onSuccess {
+                        Log.d("AuthViewModel", "Registration successful")
+                        withContext(Dispatchers.Main) {
+                            _registrationState.value = RegistrationState.Success
+                            _navigateToLogin.value = true
+                        }
+                    }.onFailure {
+                        Log.e("AuthViewModel", "Registration failed: ${it.message}")
+                        val errorMessage = when {
+                            it.message?.contains("email") == true -> "This email is already registered"
+                            it.message?.contains("password") == true -> "Password is too weak"
+                            it.message?.contains("network") == true -> "Network error. Please check your connection"
+                            else -> "Registration failed. Please try again"
+                        }
+                        withContext(Dispatchers.Main) {
+                            _registrationState.value = RegistrationState.Error(errorMessage)
+                            _error.value = errorMessage
+                        }
                     }
-                    _registrationState.value = RegistrationState.Error(errorMessage)
-                    _error.value = errorMessage
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Registration exception: ${e.message}")
                 val errorMessage = "An unexpected error occurred. Please try again"
-                _registrationState.value = RegistrationState.Error(errorMessage)
-                _error.value = errorMessage
+                withContext(Dispatchers.Main) {
+                    _registrationState.value = RegistrationState.Error(errorMessage)
+                    _error.value = errorMessage
+                }
             }
         }
     }
@@ -338,5 +377,9 @@ class AuthViewModel @Inject constructor(
                 isLoading.value = false
             }
         }
+    }
+
+    fun setLoginError(message: String) {
+        _loginError.value = message
     }
 }
