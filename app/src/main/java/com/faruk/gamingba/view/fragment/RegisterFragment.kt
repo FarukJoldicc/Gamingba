@@ -29,6 +29,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginResult
+import android.widget.Toast
+import android.util.Log
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
@@ -38,6 +44,12 @@ class RegisterFragment : Fragment() {
     private val viewModel: AuthViewModel by viewModels()
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 1001
+    private lateinit var callbackManager: CallbackManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        callbackManager = CallbackManager.Factory.create()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +68,7 @@ class RegisterFragment : Fragment() {
         setupLoginText()
         observeViewModel()
         setupGoogleSignIn()
+        setupFacebookLogin()
         
         // Set up password visibility toggle
         val passwordToggle = view.findViewById<ImageView>(R.id.passwordToggle)
@@ -99,7 +112,9 @@ class RegisterFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        callbackManager.onActivityResult(requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
+
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
@@ -171,6 +186,34 @@ class RegisterFragment : Fragment() {
         binding.goToLoginButton.setOnClickListener {
             findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
         }
+
+        binding.facebookSignUpButton.setOnClickListener {
+            Log.d("RegisterFragment", "Facebook icon clicked, triggering hidden login button")
+            binding.facebookLoginButtonHidden.performClick()
+        }
+    }
+
+    private fun setupFacebookLogin() {
+        // Request email permission along with public_profile (default)
+        binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
+
+        // Register callback for the hidden button
+        binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+            override fun onSuccess(result: LoginResult) {
+                Log.d("RegisterFragment", "Facebook login successful: ${result.accessToken.token}")
+                viewModel.signInWithFacebook(result.accessToken)
+            }
+
+            override fun onCancel() {
+                Log.d("RegisterFragment", "Facebook login canceled.")
+                Toast.makeText(context, "Facebook login canceled.", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onError(error: FacebookException) {
+                Log.e("RegisterFragment", "Facebook login error: ${error.message}")
+                Toast.makeText(context, "Facebook login failed. Please try again.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
     private fun setupLoginText() {
@@ -214,7 +257,9 @@ class RegisterFragment : Fragment() {
 
         viewModel.navigateToHome.observe(viewLifecycleOwner) { shouldNavigate ->
             if (shouldNavigate) {
-                findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
+                if (findNavController().currentDestination?.id == R.id.registerFragment) {
+                    findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
+                }
                 viewModel.onNavigationHandled()
             }
         }

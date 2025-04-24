@@ -15,4 +15,7 @@
     <string name="email_example">Tiffanyjearsey@gmail.com</string>
     <string name="don_t_have_an_account_yet_register">Don\'t have an account yet? Register</string>
     <string name="login_button">Login</string>
+    <string name="facebook_app_id">875551254716306</string>
+    <string name="fb_login_protocol_scheme">fb875551254716306</string>
+    <string name="facebook_client_token">d164428c7fcc777709803f528513886f</string>
 </resources>

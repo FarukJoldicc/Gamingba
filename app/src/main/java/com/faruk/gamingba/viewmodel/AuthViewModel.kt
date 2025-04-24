@@ -22,6 +22,9 @@ import com.faruk.gamingba.model.state.RegistrationState
 import com.faruk.gamingba.model.state.ValidationState
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
+import com.facebook.AccessToken
+import com.google.firebase.auth.FacebookAuthProvider
+import com.facebook.login.LoginManager
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -306,6 +309,7 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         repository.logout()
+        LoginManager.getInstance().logOut()
         _currentUser.value = null
         _firstName.value = null
         auth.signOut()
@@ -381,5 +385,47 @@ class AuthViewModel @Inject constructor(
 
     fun setLoginError(message: String) {
         _loginError.value = message
+    }
+
+    fun signInWithFacebook(token: AccessToken) {
+        Log.d("AuthViewModel", "signInWithFacebook called")
+        viewModelScope.launch {
+            isLoading.value = true
+            _loginError.value = null // Clear previous login errors
+            val credential = FacebookAuthProvider.getCredential(token.token)
+            try {
+                val authResultFirebase = auth.signInWithCredential(credential).await()
+                val user = authResultFirebase.user
+                user?.let { firebaseUser ->
+                    // Check if user exists in Realtime Database, create if not
+                    val userRef = database.reference.child("users").child(firebaseUser.uid)
+                    userRef.get().addOnSuccessListener { snapshot ->
+                        if (!snapshot.exists()) {
+                            // Extract name and email if possible (depends on Facebook permissions granted)
+                            // Note: Facebook might not provide email even if requested
+                            // Using display name as fallback for first name
+                            val userFirstName = firebaseUser.displayName ?: ""
+                            val userEmail = firebaseUser.email ?: ""
+                            val newUser = User(firstName = userFirstName, email = userEmail)
+                            userRef.setValue(newUser)
+                        }
+                    }.addOnFailureListener {
+                        Log.e("AuthViewModel", "Failed to check/create user in DB for Facebook sign in", it)
+                    }
+
+                    _currentUser.value = firebaseUser
+                    _authResult.value = Result.success(Unit) // Signal success for fragment observer
+                    _navigateToHome.value = true // Navigate to home
+                    Log.d("AuthViewModel", "Firebase sign in with Facebook successful.")
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Firebase sign in with Facebook failed", e)
+                _authResult.value = Result.failure(e) // Signal failure
+                // Set a user-friendly error message
+                _loginError.value = "Facebook sign-in failed. Please try again."
+            } finally {
+                isLoading.value = false
+            }
+        }
     }
 }
