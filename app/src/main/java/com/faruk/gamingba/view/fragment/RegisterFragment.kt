@@ -196,6 +196,8 @@ class RegisterFragment : Fragment() {
     private fun setupFacebookLogin() {
         // Request email permission along with public_profile (default)
         binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
+        // Explicitly set the fragment for the LoginButton callback
+        binding.facebookLoginButtonHidden.setFragment(this)
 
         // Register callback for the hidden button
         binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {

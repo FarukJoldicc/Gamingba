@@ -46,14 +46,13 @@ class LoginFragment : Fragment() {
     private val viewModel: AuthViewModel by viewModels()
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 1001
-    private lateinit var callbackManager: CallbackManager
+    private val callbackManager: CallbackManager = CallbackManager.Factory.create()
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        callbackManager = CallbackManager.Factory.create()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -157,6 +156,7 @@ class LoginFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.d("LoginFragment", "onActivityResult called. RequestCode: $requestCode")
         callbackManager.onActivityResult(requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
@@ -209,21 +209,24 @@ class LoginFragment : Fragment() {
     private fun setupFacebookLogin() {
         // Request email permission along with public_profile (default)
         binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
+        // Explicitly set the fragment for the LoginButton callback
+        binding.facebookLoginButtonHidden.setFragment(this)
 
         // Register callback for the hidden button
         binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
             override fun onSuccess(result: LoginResult) {
+                Log.d("LoginFragment", "FacebookCallback onSuccess triggered.")
                 Log.d("LoginFragment", "Facebook login successful: ${result.accessToken.token}")
                 viewModel.signInWithFacebook(result.accessToken)
             }
 
             override fun onCancel() {
-                Log.d("LoginFragment", "Facebook login canceled.")
+                Log.d("LoginFragment", "FacebookCallback onCancel triggered.")
                 Toast.makeText(context, "Facebook login canceled.", Toast.LENGTH_SHORT).show()
             }
 
             override fun onError(error: FacebookException) {
-                Log.e("LoginFragment", "Facebook login error: ${error.message}")
+                Log.e("LoginFragment", "FacebookCallback onError triggered.", error)
                 Toast.makeText(context, "Facebook login failed. Please try again.", Toast.LENGTH_LONG).show()
             }
         })
