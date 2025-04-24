@@ -2,6 +2,7 @@ package com.faruk.gamingba.model.repository
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -18,6 +19,19 @@ class AuthRepository @Inject constructor(
             firebaseAuth.signInWithEmailAndPassword(email, password).await()
             Log.d("AuthRepository", "Login successful")
             Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Login failed: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun loginAndGetUser(email: String, password: String): Result<FirebaseUser> {
+        return try {
+            Log.d("AuthRepository", "Attempting login for email: $email")
+            val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            Log.d("AuthRepository", "Login successful, returning user.")
+            authResult.user?.let { Result.success(it) } 
+                ?: Result.failure(Exception("User was null after successful login"))
         } catch (e: Exception) {
             Log.e("AuthRepository", "Login failed: ${e.message}")
             Result.failure(e)
@@ -47,6 +61,35 @@ class AuthRepository @Inject constructor(
             }
             
             Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Registration failed: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    suspend fun registerAndGetUser(email: String, password: String, firstName: String): Result<FirebaseUser> {
+        return try {
+            Log.d("AuthRepository", "Starting registration process")
+            Log.d("AuthRepository", "Email: $email")
+            Log.d("AuthRepository", "Password length: ${password.length}")
+            Log.d("AuthRepository", "First Name: $firstName")
+            
+            Log.d("AuthRepository", "Creating user with Firebase Auth")
+            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+            Log.d("AuthRepository", "Firebase Auth registration successful")
+            
+            authResult.user?.let { user ->
+                Log.d("AuthRepository", "User created successfully, UID: ${user.uid}")
+                Log.d("AuthRepository", "Saving user data to Realtime Database")
+                val newUser = User(firstName = firstName, email = email)
+                database.reference.child("users").child(user.uid).setValue(newUser).await()
+                Log.d("AuthRepository", "User data saved successfully to Realtime Database")
+                Result.success(user)
+            } ?: run {
+                Log.e("AuthRepository", "User is null after successful registration")
+                Result.failure(Exception("User is null after successful registration"))
+            }
         } catch (e: Exception) {
             Log.e("AuthRepository", "Registration failed: ${e.message}")
             e.printStackTrace()

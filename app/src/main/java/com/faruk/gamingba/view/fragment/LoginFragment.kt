@@ -32,6 +32,11 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import javax.inject.Inject
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginResult
+import com.facebook.login.LoginManager
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
@@ -41,9 +46,14 @@ class LoginFragment : Fragment() {
     private val viewModel: AuthViewModel by viewModels()
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 1001
+    private val callbackManager: CallbackManager = CallbackManager.Factory.create()
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
@@ -64,6 +74,7 @@ class LoginFragment : Fragment() {
         setupRegisterText()
         observeViewModel()
         setupErrorHandling()
+        setupFacebookLogin()
     }
 
     private fun setupErrorHandling() {
@@ -145,6 +156,8 @@ class LoginFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.d("LoginFragment", "onActivityResult called. RequestCode: $requestCode")
+        callbackManager.onActivityResult(requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
@@ -186,6 +199,37 @@ class LoginFragment : Fragment() {
         binding.goToRegisterButton.setOnClickListener {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
         }
+
+        binding.facebookSignInButton.setOnClickListener {
+            Log.d("LoginFragment", "Facebook icon clicked, triggering hidden login button")
+            binding.facebookLoginButtonHidden.performClick()
+        }
+    }
+
+    private fun setupFacebookLogin() {
+        // Request email permission along with public_profile (default)
+        binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
+        // Explicitly set the fragment for the LoginButton callback
+        binding.facebookLoginButtonHidden.setFragment(this)
+
+        // Register callback for the hidden button
+        binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+            override fun onSuccess(result: LoginResult) {
+                Log.d("LoginFragment", "FacebookCallback onSuccess triggered.")
+                Log.d("LoginFragment", "Facebook login successful: ${result.accessToken.token}")
+                viewModel.signInWithFacebook(result.accessToken)
+            }
+
+            override fun onCancel() {
+                Log.d("LoginFragment", "FacebookCallback onCancel triggered.")
+                Toast.makeText(context, "Facebook login canceled.", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onError(error: FacebookException) {
+                Log.e("LoginFragment", "FacebookCallback onError triggered.", error)
+                Toast.makeText(context, "Facebook login failed. Please try again.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
     private fun observeViewModel() {
@@ -206,17 +250,37 @@ class LoginFragment : Fragment() {
             }
         }
 
-        // Observe auth result
+        // Observe auth result - updated to handle email verification
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.authResult.collectLatest { result ->
                 result?.let {
                     if (it.isSuccess) {
-                        Log.d("LoginFragment", "Login successful, navigating to home fragment")
-                        findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+                        // Navigation to home is handled by navigateToHome LiveData
+                        Log.d("LoginFragment", "Auth successful observed (isSuccess=true).")
                     } else {
-                        Log.e("LoginFragment", "Login failed: ${it.exceptionOrNull()?.message}")
-                        // Don't show the Toast, let the error message be handled by our custom error handling
+                        // Check if the failure is due to email not being verified
+                        if (it.exceptionOrNull() is AuthViewModel.EmailNotVerifiedException) {
+                            // Navigation to verify email screen is handled by navigateToVerifyEmail LiveData
+                            Log.d("LoginFragment", "Auth failed observed: Email not verified.")
+                        } else {
+                            // Other login errors are handled by viewModel.loginError LiveData binding
+                            Log.e("LoginFragment", "Auth failed observed: ${it.exceptionOrNull()?.message}")
+                        }
                     }
+                    viewModel.clearAuthResult() // Clear the result after observing
+                }
+            }
+        }
+
+        // Observe navigation to Verify Email screen (for login attempts)
+        viewModel.navigateToVerifyEmail.observe(viewLifecycleOwner) { email ->
+            email?.let {
+                // Check if we are currently on the LoginFragment to avoid double navigation
+                if (findNavController().currentDestination?.id == R.id.loginFragment) {
+                    Log.d("LoginFragment", "Navigating to Verify Email screen for $email")
+                    val action = LoginFragmentDirections.actionLoginFragmentToVerifyEmailFragment(it)
+                    findNavController().navigate(action)
+                    viewModel.onNavigationHandled() // Reset the trigger
                 }
             }
         }

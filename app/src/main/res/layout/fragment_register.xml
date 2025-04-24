@@ -355,6 +355,7 @@
                     android:contentDescription="Google Sign Up" />
 
                 <ImageView
+                    android:id="@+id/facebookSignUpButton"
                     android:layout_width="65dp"
                     android:layout_height="65dp"
                     android:background="@drawable/circle_facebook"
@@ -362,6 +363,13 @@
                     android:src="@drawable/ic_facebook"
                     android:contentDescription="Facebook Sign Up" />
             </LinearLayout>
+
+            <!-- Hidden Facebook Login Button -->
+            <com.facebook.login.widget.LoginButton
+                android:id="@+id/facebookLoginButtonHidden"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
 
             <ProgressBar
                 android:id="@+id/progressBar"
