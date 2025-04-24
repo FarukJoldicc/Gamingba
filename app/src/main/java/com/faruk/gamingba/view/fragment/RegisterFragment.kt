@@ -235,11 +235,13 @@ class RegisterFragment : Fragment() {
     }
 
     private fun observeViewModel() {
+        // Remove or comment out the old RegistrationState observer if VerifyEmail is the primary flow
+        /*
         viewModel.registrationState.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is RegistrationState.Success -> {
-                    // Navigate to login fragment
-                    findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                    // Navigate to login fragment - Now handled by navigateToVerifyEmail
+                    // findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
                 }
                 is RegistrationState.Error -> {
                     // Error is already handled by the ViewModel and displayed in the layout
@@ -247,6 +249,17 @@ class RegisterFragment : Fragment() {
                 is RegistrationState.Loading -> {
                     // Loading state is handled by the layout
                 }
+            }
+        }
+        */
+
+        // Observe navigation to Verify Email screen
+        viewModel.navigateToVerifyEmail.observe(viewLifecycleOwner) { email ->
+            email?.let {
+                Log.d("RegisterFragment", "Navigating to Verify Email screen for $email")
+                val action = RegisterFragmentDirections.actionRegisterFragmentToVerifyEmailFragment(it)
+                findNavController().navigate(action)
+                viewModel.onNavigationHandled() // Reset the trigger
             }
         }
 

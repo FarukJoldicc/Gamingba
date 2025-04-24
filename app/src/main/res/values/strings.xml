@@ -18,4 +18,9 @@
     <string name="facebook_app_id">875551254716306</string>
     <string name="fb_login_protocol_scheme">fb875551254716306</string>
     <string name="facebook_client_token">d164428c7fcc777709803f528513886f</string>
+    <string name="verify_email_message_template">We have sent a verification link to your email address:\n%1$s\nPlease check your inbox and click the link to activate your account.</string>
+    <string name="resend_verification_email">Resend Verification Email</string>
+    <string name="resend_email_cooldown">Resend email in %1$ds</string>
+    <string name="email_sent_success">Verification email sent successfully</string>
+    <string name="email_sent_failure">Failed to send verification email: %1$s</string>
 </resources>

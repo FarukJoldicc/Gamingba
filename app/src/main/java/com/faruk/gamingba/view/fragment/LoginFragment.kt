@@ -250,18 +250,37 @@ class LoginFragment : Fragment() {
             }
         }
 
-        // Observe auth result
+        // Observe auth result - updated to handle email verification
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.authResult.collectLatest { result ->
                 result?.let {
                     if (it.isSuccess) {
-                        Log.d("LoginFragment", "Auth successful, navigating to home fragment")
-                        if (findNavController().currentDestination?.id == R.id.loginFragment) {
-                            findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
-                        }
+                        // Navigation to home is handled by navigateToHome LiveData
+                        Log.d("LoginFragment", "Auth successful observed (isSuccess=true).")
                     } else {
-                        Log.e("LoginFragment", "Auth failed: ${it.exceptionOrNull()?.message}")
+                        // Check if the failure is due to email not being verified
+                        if (it.exceptionOrNull() is AuthViewModel.EmailNotVerifiedException) {
+                            // Navigation to verify email screen is handled by navigateToVerifyEmail LiveData
+                            Log.d("LoginFragment", "Auth failed observed: Email not verified.")
+                        } else {
+                            // Other login errors are handled by viewModel.loginError LiveData binding
+                            Log.e("LoginFragment", "Auth failed observed: ${it.exceptionOrNull()?.message}")
+                        }
                     }
+                    viewModel.clearAuthResult() // Clear the result after observing
+                }
+            }
+        }
+
+        // Observe navigation to Verify Email screen (for login attempts)
+        viewModel.navigateToVerifyEmail.observe(viewLifecycleOwner) { email ->
+            email?.let {
+                // Check if we are currently on the LoginFragment to avoid double navigation
+                if (findNavController().currentDestination?.id == R.id.loginFragment) {
+                    Log.d("LoginFragment", "Navigating to Verify Email screen for $email")
+                    val action = LoginFragmentDirections.actionLoginFragmentToVerifyEmailFragment(it)
+                    findNavController().navigate(action)
+                    viewModel.onNavigationHandled() // Reset the trigger
                 }
             }
         }

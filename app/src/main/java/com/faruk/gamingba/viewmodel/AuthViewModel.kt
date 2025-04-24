@@ -75,6 +75,10 @@ class AuthViewModel @Inject constructor(
     private val _navigateToHome = MutableLiveData<Boolean>()
     val navigateToHome: LiveData<Boolean> = _navigateToHome
 
+    // New navigation event for verify email screen
+    private val _navigateToVerifyEmail = MutableLiveData<String?>()
+    val navigateToVerifyEmail: LiveData<String?> = _navigateToVerifyEmail
+
     // Error messages for each field
     private val _firstNameError = MutableLiveData<String?>()
     val firstNameError: LiveData<String?> = _firstNameError
@@ -218,29 +222,44 @@ class AuthViewModel @Inject constructor(
 
     private fun login(email: String, password: String) {
         viewModelScope.launch {
-            Log.d("AuthViewModel", "Starting login process")
+            Log.d("AuthViewModel", "Starting login process for $email")
             isLoading.value = true
             _loginError.value = null
             try {
-                val result = repository.login(email, password)
-                _authResult.value = result
-                if (result.isSuccess) {
-                    Log.d("AuthViewModel", "Login successful")
-                    _currentUser.value = repository.getCurrentUser()
-                    fetchUserData()
-                } else {
+                // Use repository.loginAndGetUser which should return Result<FirebaseUser>
+                val result = repository.loginAndGetUser(email, password)
+
+                result.onSuccess { firebaseUser ->
+                    if (firebaseUser.isEmailVerified) {
+                        Log.d("AuthViewModel", "Login successful and email verified for $email")
+                        _currentUser.value = firebaseUser
+                        _authResult.value = Result.success(Unit) // Signal success
+                        fetchUserData()
+                        _navigateToHome.value = true // Navigate to home
+                    } else {
+                        // Email not verified
+                        Log.d("AuthViewModel", "Login successful but email NOT verified for $email")
+                        _authResult.value = Result.failure(EmailNotVerifiedException()) // Signal specific state
+                        _navigateToVerifyEmail.value = email // Navigate to verify screen
+                    }
+                }.onFailure { exception ->
+                    Log.e("AuthViewModel", "Login failed for $email", exception)
                     _loginError.value = "You have entered an incorrect email address or password"
+                    _authResult.value = Result.failure(exception) // Signal general failure
                 }
             } catch (e: Exception) {
-                // Log the actual error for debugging
-                Log.e("AuthViewModel", "Login exception: ${e.message}")
-                // Show user-friendly message instead of the actual error
-                _loginError.value = "You have entered an incorrect email address or password"
+                // Catch potential exceptions from the repository call itself
+                Log.e("AuthViewModel", "Login exception for $email", e)
+                _loginError.value = "An error occurred during login. Please try again."
+                _authResult.value = Result.failure(e) // Signal failure
             } finally {
                 isLoading.value = false
             }
         }
     }
+
+    // Custom exception for clarity
+    class EmailNotVerifiedException : Exception("Email is not verified.")
 
     fun onLoginClicked() {
         if (email.value.isEmpty() || password.value.isEmpty()) {
@@ -269,32 +288,43 @@ class AuthViewModel @Inject constructor(
             try {
                 _registrationState.postValue(RegistrationState.Loading)
                 _error.postValue(null)
-                
-                withContext(Dispatchers.IO) {
-                    val result = repository.register(email, password, firstName)
-                    result.onSuccess {
-                        Log.d("AuthViewModel", "Registration successful")
-                        withContext(Dispatchers.Main) {
-                            _registrationState.value = RegistrationState.Success
-                            _navigateToLogin.value = true
+
+                // Use repository.register to create user and get FirebaseUser
+                val result = repository.registerAndGetUser(email, password, firstName)
+
+                result.onSuccess { firebaseUser ->
+                    Log.d("AuthViewModel", "Registration successful, sending verification email.")
+                    // Send verification email
+                    firebaseUser.sendEmailVerification().addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Log.d("AuthViewModel", "Verification email sent successfully.")
+                            _registrationState.value = RegistrationState.Success // Indicate registration part is done
+                            _navigateToVerifyEmail.value = email // Trigger navigation with email
+                        } else {
+                            Log.e("AuthViewModel", "Failed to send verification email.", task.exception)
+                            _registrationState.value = RegistrationState.Error("Registration succeeded but failed to send verification email.")
+                            _error.value = "Couldn't send verification email. Please try logging in."
+                            _navigateToLogin.value = true // Navigate to login as fallback
                         }
-                    }.onFailure {
-                        Log.e("AuthViewModel", "Registration failed: ${it.message}")
-                        val errorMessage = when {
-                            it.message?.contains("email") == true -> "This email is already registered"
-                            it.message?.contains("password") == true -> "Password is too weak"
-                            it.message?.contains("network") == true -> "Network error. Please check your connection"
-                            else -> "Registration failed. Please try again"
-                        }
-                        withContext(Dispatchers.Main) {
-                            _registrationState.value = RegistrationState.Error(errorMessage)
-                            _error.value = errorMessage
-                        }
+                    }
+                }.onFailure { exception ->
+                    Log.e("AuthViewModel", "Registration failed: ${exception.message}")
+                    val errorMessage = when {
+                        exception.message?.contains("email") == true -> "This email is already registered"
+                        exception.message?.contains("password") == true -> "Password is too weak"
+                        exception.message?.contains("network") == true -> "Network error. Please check your connection"
+                        else -> "Registration failed. Please try again"
+                    }
+                    // Post error back to the main thread from IO dispatcher
+                    withContext(Dispatchers.Main) {
+                        _registrationState.value = RegistrationState.Error(errorMessage)
+                        _error.value = errorMessage
                     }
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Registration exception: ${e.message}")
                 val errorMessage = "An unexpected error occurred. Please try again"
+                // Post error back to the main thread from IO dispatcher
                 withContext(Dispatchers.Main) {
                     _registrationState.value = RegistrationState.Error(errorMessage)
                     _error.value = errorMessage
@@ -333,6 +363,7 @@ class AuthViewModel @Inject constructor(
         _navigateToLogin.value = false
         _navigateToRegister.value = false
         _navigateToHome.value = false
+        _navigateToVerifyEmail.value = null // Reset verify email navigation trigger
     }
 
     // Updated setters with field touch tracking
