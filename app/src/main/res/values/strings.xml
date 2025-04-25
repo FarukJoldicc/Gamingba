@@ -12,12 +12,12 @@
     <string name="logout">logout</string>
     <string name="default_web_client_id">XXXX</string>
     <string name="login_to_your_account">Login to Your Account</string>
-    <string name="email_example">johndoe@example.com</string>
+    <string name="email_example">Tiffanyjearsey@gmail.com</string>
     <string name="don_t_have_an_account_yet_register">Don\'t have an account yet? Register</string>
     <string name="login_button">Log In</string>
-    <string name="facebook_app_id">XXXX</string>
+    <string name="facebook_app_id">875551254716306</string>
     <string name="fb_login_protocol_scheme">fb875551254716306</string>
-    <string name="facebook_client_token">XXXX</string>
+    <string name="facebook_client_token">d164428c7fcc777709803f528513886f</string>
     <string name="verify_email_message_template">We sent a verification link to %1$s. Please check your inbox and click the link to activate your account.</string>
     <string name="resend_verification_email">Resend Verification Email</string>
     <string name="resend_email_cooldown">Resend in %1$d s</string>
@@ -30,4 +30,6 @@
     <string name="back_to_login_prompt">Back to Login</string>
     <string name="logo_description">Gamingba App Logo</string>
     <string name="email_verified_success_message">Email Verified Successfully!</string>
+    <string name="password_hint">•••••••••••••••••</string>
+    <string name="first_name_hint">Tiffany</string>
 </resources>
