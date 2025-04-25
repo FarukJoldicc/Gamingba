@@ -53,6 +53,9 @@ class LoginFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Disable Firebase default error handling
+        firebaseAuth.setLanguageCode("en")
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -222,12 +225,14 @@ class LoginFragment : Fragment() {
 
             override fun onCancel() {
                 Log.d("LoginFragment", "FacebookCallback onCancel triggered.")
-                Toast.makeText(context, "Facebook login canceled.", Toast.LENGTH_SHORT).show()
+                // Using our own toast message instead of default
+                Toast.makeText(context, "Facebook login canceled", Toast.LENGTH_SHORT).show()
             }
 
             override fun onError(error: FacebookException) {
                 Log.e("LoginFragment", "FacebookCallback onError triggered.", error)
-                Toast.makeText(context, "Facebook login failed. Please try again.", Toast.LENGTH_LONG).show()
+                // Using our own toast message instead of default
+                Toast.makeText(context, "Facebook login failed. Please try again", Toast.LENGTH_LONG).show()
             }
         })
     }

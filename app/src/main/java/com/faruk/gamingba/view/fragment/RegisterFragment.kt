@@ -35,6 +35,8 @@ import com.facebook.FacebookException
 import com.facebook.login.LoginResult
 import android.widget.Toast
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
@@ -45,10 +47,16 @@ class RegisterFragment : Fragment() {
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 1001
     private lateinit var callbackManager: CallbackManager
+    
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         callbackManager = CallbackManager.Factory.create()
+        
+        // Disable Firebase default error handling
+        firebaseAuth.setLanguageCode("en")
     }
 
     override fun onCreateView(
@@ -208,12 +216,14 @@ class RegisterFragment : Fragment() {
 
             override fun onCancel() {
                 Log.d("RegisterFragment", "Facebook login canceled.")
-                Toast.makeText(context, "Facebook login canceled.", Toast.LENGTH_SHORT).show()
+                // Using our own toast message instead of default
+                Toast.makeText(context, "Facebook login canceled", Toast.LENGTH_SHORT).show()
             }
 
             override fun onError(error: FacebookException) {
                 Log.e("RegisterFragment", "Facebook login error: ${error.message}")
-                Toast.makeText(context, "Facebook login failed. Please try again.", Toast.LENGTH_LONG).show()
+                // Using our own toast message instead of default
+                Toast.makeText(context, "Facebook login failed. Please try again", Toast.LENGTH_LONG).show()
             }
         })
     }

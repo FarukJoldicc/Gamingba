@@ -72,6 +72,11 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/verifyEmailFragment"
             app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/action_verifyEmailFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/verifyEmailFragment"
+            app:popUpToInclusive="true"/>
     </fragment>
 
 </navigation>
