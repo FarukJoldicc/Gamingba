@@ -23,4 +23,5 @@
     <string name="resend_email_cooldown">Resend email in %1$ds</string>
     <string name="email_sent_success">Verification email sent successfully</string>
     <string name="email_sent_failure">Failed to send verification email: %1$s</string>
+    <string name="or_login_with">Or Login With</string>
 </resources>
