@@ -7,6 +7,7 @@ import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import com.faruk.gamingba.model.data.User
+import com.google.firebase.auth.UserProfileChangeRequest
 
 class AuthRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
@@ -51,6 +52,11 @@ class AuthRepository @Inject constructor(
             
             authResult.user?.let { user ->
                 Log.d("AuthRepository", "User created successfully, UID: ${user.uid}")
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(firstName)
+                    .build()
+                user.updateProfile(profileUpdates).await()
+                Log.d("AuthRepository", "User displayName set to $firstName")
                 Log.d("AuthRepository", "Saving user data to Realtime Database")
                 val newUser = User(firstName = firstName, email = email)
                 database.reference.child("users").child(user.uid).setValue(newUser).await()
@@ -81,6 +87,11 @@ class AuthRepository @Inject constructor(
             
             authResult.user?.let { user ->
                 Log.d("AuthRepository", "User created successfully, UID: ${user.uid}")
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(firstName)
+                    .build()
+                user.updateProfile(profileUpdates).await()
+                Log.d("AuthRepository", "User displayName set to $firstName")
                 Log.d("AuthRepository", "Saving user data to Realtime Database")
                 val newUser = User(firstName = firstName, email = email)
                 database.reference.child("users").child(user.uid).setValue(newUser).await()
