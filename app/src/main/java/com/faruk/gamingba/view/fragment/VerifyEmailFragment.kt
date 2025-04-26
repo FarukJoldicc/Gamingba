@@ -32,8 +32,6 @@ class VerifyEmailFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private var timer: CountDownTimer? = null
     private var isTimerRunning = false
-    private val scheduler = Executors.newSingleThreadScheduledExecutor()
-    private var verificationCheckFuture: ScheduledFuture<*>? = null
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
@@ -59,8 +57,10 @@ class VerifyEmailFragment : Fragment() {
         // Start cooldown timer immediately
         startCooldownTimer()
         
-        // Send verification email automatically on first load
-        sendVerificationEmail()
+        // Only send verification email automatically if shouldSendEmail is true
+        if (args.shouldSendEmail) {
+            sendVerificationEmail()
+        }
     }
 
     private fun setupClickListeners() {
@@ -90,16 +90,51 @@ class VerifyEmailFragment : Fragment() {
         }
         
         try {
-            user.sendEmailVerification()
-                ?.addOnCompleteListener { task ->
+            // Create ActionCodeSettings with Firebase Dynamic Links
+            val actionCodeSettings = com.google.firebase.auth.ActionCodeSettings.newBuilder()
+                .setUrl("https://gamingba.page.link/verify")  // Using Firebase Dynamic Links
+                .setHandleCodeInApp(true)                     // This forces the link to open in your app
+                .setAndroidPackageName(
+                    "com.faruk.gamingba",                     // Your app's package name
+                    true,                                     // Install if not available?
+                    "1"                                       // Minimum version
+                )
+                .build()
+            
+            Log.d("VerifyEmailFragment", "Sending verification email with Dynamic Link")
+            
+            // Send verification email with ActionCodeSettings
+            user.sendEmailVerification(actionCodeSettings)
+                .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        Log.d("VerifyEmailFragment", "Verification email sent successfully.")
+                        Log.d("VerifyEmailFragment", "Verification email sent successfully with Dynamic Link")
                     } else {
-                        Log.e("VerifyEmailFragment", "Failed to send verification email.", task.exception)
+                        Log.e("VerifyEmailFragment", "Failed to send verification email with Dynamic Link", task.exception)
+                        // Fallback to standard verification if Dynamic Link fails
+                        sendStandardVerificationEmail(user)
                     }
                 }
         } catch (e: Exception) {
-            Log.e("VerifyEmailFragment", "Exception sending verification email", e)
+            Log.e("VerifyEmailFragment", "Exception sending verification email with Dynamic Link", e)
+            // Fallback to standard verification if there's an exception
+            sendStandardVerificationEmail(user)
+        }
+    }
+    
+    // Fallback method using standard verification (without dynamic links)
+    private fun sendStandardVerificationEmail(user: com.google.firebase.auth.FirebaseUser) {
+        try {
+            Log.d("VerifyEmailFragment", "Falling back to standard verification email")
+            user.sendEmailVerification()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d("VerifyEmailFragment", "Standard verification email sent successfully")
+                    } else {
+                        Log.e("VerifyEmailFragment", "Failed to send standard verification email", task.exception)
+                    }
+                }
+        } catch (e: Exception) {
+            Log.e("VerifyEmailFragment", "Exception sending standard verification email", e)
         }
     }
 
@@ -125,42 +160,22 @@ class VerifyEmailFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        Log.d("VerifyEmailFragment", "onResume called, starting verification check.")
+        Log.d("VerifyEmailFragment", "onResume called, checking verification status.")
         // Hide success message and spinner if they were previously shown
         binding.textSuccessMessage.visibility = View.GONE
         binding.verificationSpinner.visibility = View.GONE // Ensure spinner is hidden on resume
-        startVerificationCheck()
+        checkVerificationStatus()
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d("VerifyEmailFragment", "onPause called, stopping verification check.")
-        stopVerificationCheck()
-    }
-
-    private fun startVerificationCheck() {
-        // Avoid starting multiple checks
-        if (verificationCheckFuture?.isDone == false) {
-            return
-        }
-        // Check immediately and then every 2 seconds
-        verificationCheckFuture = scheduler.scheduleAtFixedRate({
-            // Ensure code runs on the main thread for UI updates and Firebase calls
-            activity?.runOnUiThread {
-                checkVerificationStatus()
-            }
-        }, 0, 2, TimeUnit.SECONDS) // Changed interval to 2 seconds
-    }
-
-    private fun stopVerificationCheck() {
-        verificationCheckFuture?.cancel(true)
+        Log.d("VerifyEmailFragment", "onPause called.")
     }
 
     private fun checkVerificationStatus() {
         val currentUser = firebaseAuth.currentUser
         if (currentUser == null) {
              Log.d("VerifyEmailFragment", "User is null, stopping verification check.")
-             stopVerificationCheck()
              return
         }
 
@@ -170,7 +185,6 @@ class VerifyEmailFragment : Fragment() {
                     val isVerified = firebaseAuth.currentUser?.isEmailVerified == true // Re-check after reload
                     if (isVerified) {
                         Log.d("VerifyEmailFragment", "Email verified! Showing success state and navigating to home.")
-                        stopVerificationCheck() // Stop periodic checking
 
                         // --- UI Changes for Verified State ---
                         binding.imageLogo.visibility = View.VISIBLE // Ensure logo is visible
@@ -216,7 +230,6 @@ class VerifyEmailFragment : Fragment() {
         super.onDestroyView()
         timer?.cancel()
         timer = null
-        stopVerificationCheck() // Ensure scheduler is stopped
         _binding = null
     }
 } 

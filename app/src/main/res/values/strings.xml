@@ -32,4 +32,19 @@
     <string name="email_verified_success_message">Email Verified Successfully!</string>
     <string name="password_hint">•••••••••••••••••</string>
     <string name="first_name_hint">Tiffany</string>
+    
+    <!-- Password Reset -->
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_subtitle">Recover your account password</string>
+    <string name="reset_password_button">Next</string>
+    <string name="forgot_password">Forgot password?</string>
+    
+    <!-- Create New Password -->
+    <string name="create_new_password_title">Create New Password</string>
+    <string name="create_new_password_subtitle">Enter your new password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="reset_button">Reset</string>
+    <string name="password_reset_success">Your password has been reset successfully!</string>
+    <string name="password_reset_email_sent">We\'ve sent a password reset link to your email</string>
 </resources>
