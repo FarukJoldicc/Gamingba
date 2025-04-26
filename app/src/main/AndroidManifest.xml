@@ -22,10 +22,39 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
+            <!-- Main launcher intent filter -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+            <!-- Dynamic Links intent filter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="gamingba.page.link"
+                    android:scheme="https" />
+            </intent-filter>
+
+            <!-- Firebase Hosting intent filter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="gamingba-e4849.firebaseapp.com"
+                    android:scheme="https" />
+            </intent-filter>
+            <!-- Optional: web.app domain -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="gamingba-e4849.web.app"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
 

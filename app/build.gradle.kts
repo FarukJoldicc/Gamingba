@@ -78,4 +78,7 @@ dependencies {
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.play.services)
+    
+    // Firebase Dynamic Links
+    implementation("com.google.firebase:firebase-dynamic-links-ktx:21.1.0")
 }

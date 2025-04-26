@@ -202,30 +202,59 @@ class RegisterFragment : Fragment() {
     }
 
     private fun setupFacebookLogin() {
-        // Request email permission along with public_profile (default)
-        binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
-        // Explicitly set the fragment for the LoginButton callback
-        binding.facebookLoginButtonHidden.setFragment(this)
+        try {
+            Log.d("RegisterFragment", "Setting up Facebook login with App ID: ${getString(R.string.facebook_app_id)}")
+            Log.d("RegisterFragment", "Facebook Client Token: ${getString(R.string.facebook_client_token)}")
+            Log.d("RegisterFragment", "Login Protocol Scheme: ${getString(R.string.fb_login_protocol_scheme)}")
+            
+            // Request email permission along with public_profile (default)
+            binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
+            // Explicitly set the fragment for the LoginButton callback
+            binding.facebookLoginButtonHidden.setFragment(this)
 
-        // Register callback for the hidden button
-        binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
-            override fun onSuccess(result: LoginResult) {
-                Log.d("RegisterFragment", "Facebook login successful: ${result.accessToken.token}")
-                viewModel.signInWithFacebook(result.accessToken)
-            }
+            // Register callback for the hidden button
+            binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+                override fun onSuccess(result: LoginResult) {
+                    Log.d("RegisterFragment", "Facebook login successful: ${result.accessToken.token}")
+                    Log.d("RegisterFragment", "Facebook user ID: ${result.accessToken.userId}")
+                    Log.d("RegisterFragment", "Facebook permissions: ${result.accessToken.permissions}")
+                    viewModel.signInWithFacebook(result.accessToken)
+                }
 
-            override fun onCancel() {
-                Log.d("RegisterFragment", "Facebook login canceled.")
-                // Using our own toast message instead of default
-                Toast.makeText(context, "Facebook login canceled", Toast.LENGTH_SHORT).show()
-            }
+                override fun onCancel() {
+                    Log.d("RegisterFragment", "Facebook login canceled.")
+                    // Using our own toast message instead of default
+                    Toast.makeText(context, "Facebook login canceled", Toast.LENGTH_SHORT).show()
+                }
 
-            override fun onError(error: FacebookException) {
-                Log.e("RegisterFragment", "Facebook login error: ${error.message}")
-                // Using our own toast message instead of default
-                Toast.makeText(context, "Facebook login failed. Please try again", Toast.LENGTH_LONG).show()
-            }
-        })
+                override fun onError(error: FacebookException) {
+                    Log.e("RegisterFragment", "Facebook login error: ${error.message}", error)
+                    
+                    // More detailed error logging
+                    when (error) {
+                        is com.facebook.FacebookAuthorizationException -> {
+                            Log.e("RegisterFragment", "Facebook Authorization Exception. Check FB App ID/Secret")
+                        }
+                        is com.facebook.FacebookOperationCanceledException -> {
+                            Log.e("RegisterFragment", "Facebook Operation Canceled")
+                        }
+                        is com.facebook.FacebookServiceException -> {
+                            val fbError = (error as com.facebook.FacebookServiceException).requestError
+                            Log.e("RegisterFragment", "FacebookServiceException: ${fbError.errorCode} - ${fbError.errorMessage}")
+                        }
+                        else -> {
+                            Log.e("RegisterFragment", "Generic Facebook Error", error)
+                        }
+                    }
+                    
+                    // Using our own toast message instead of default
+                    Toast.makeText(context, "Facebook login failed: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            })
+        } catch (e: Exception) {
+            Log.e("RegisterFragment", "Exception during Facebook login setup", e)
+            Toast.makeText(context, "Error setting up Facebook login", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun setupLoginText() {
@@ -265,6 +294,7 @@ class RegisterFragment : Fragment() {
 
         // Observe navigation to Verify Email screen
         viewModel.navigateToVerifyEmail.observe(viewLifecycleOwner) { email ->
+            Log.d("RegisterFragment", "Observer triggered for navigateToVerifyEmail: $email")
             email?.let {
                 Log.d("RegisterFragment", "Navigating to Verify Email screen for $email")
                 val action = RegisterFragmentDirections.actionRegisterFragmentToVerifyEmailFragment(it)

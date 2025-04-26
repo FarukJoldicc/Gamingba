@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        function getQueryString() {
+            return window.location.search;
+        }
+        function redirectToDynamicLink() {
+            // Build the dynamic link with the original query params
+            var query = getQueryString();
+            var dynamicLink = "https://gamingba.page.link/?link=" +
+                encodeURIComponent("https://gamingba-e4849.firebaseapp.com/action" + query) +
+                "&apn=com.faruk.gamingba";
+            window.location = dynamicLink;
+        }
+    </script>
+</head>
+<body onload="redirectToDynamicLink()">
+<h2>Redirecting to the app...</h2>
+<div id="fallback" style="display:none;">
+    <p>If you are not redirected, please open this link on your phone with the Gamingba app installed.</p>
+</div>
+</body>
+</html>

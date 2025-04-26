@@ -37,6 +37,7 @@ import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginResult
 import com.facebook.login.LoginManager
+import com.google.firebase.auth.ActionCodeSettings
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
@@ -207,34 +208,68 @@ class LoginFragment : Fragment() {
             Log.d("LoginFragment", "Facebook icon clicked, triggering hidden login button")
             binding.facebookLoginButtonHidden.performClick()
         }
+        
+        binding.forgotPasswordTextView.setOnClickListener {
+            Log.d("LoginFragment", "Forgot password clicked")
+            findNavController().navigate(R.id.action_loginFragment_to_resetPasswordFragment)
+        }
     }
 
     private fun setupFacebookLogin() {
-        // Request email permission along with public_profile (default)
-        binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
-        // Explicitly set the fragment for the LoginButton callback
-        binding.facebookLoginButtonHidden.setFragment(this)
+        try {
+            Log.d("LoginFragment", "Setting up Facebook login with App ID: ${getString(R.string.facebook_app_id)}")
+            Log.d("LoginFragment", "Facebook Client Token: ${getString(R.string.facebook_client_token)}")
+            Log.d("LoginFragment", "Login Protocol Scheme: ${getString(R.string.fb_login_protocol_scheme)}")
+            
+            // Request email permission along with public_profile (default)
+            binding.facebookLoginButtonHidden.setPermissions("email", "public_profile")
+            // Explicitly set the fragment for the LoginButton callback
+            binding.facebookLoginButtonHidden.setFragment(this)
 
-        // Register callback for the hidden button
-        binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
-            override fun onSuccess(result: LoginResult) {
-                Log.d("LoginFragment", "FacebookCallback onSuccess triggered.")
-                Log.d("LoginFragment", "Facebook login successful: ${result.accessToken.token}")
-                viewModel.signInWithFacebook(result.accessToken)
-            }
+            // Register callback for the hidden button
+            binding.facebookLoginButtonHidden.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+                override fun onSuccess(result: LoginResult) {
+                    Log.d("LoginFragment", "FacebookCallback onSuccess triggered.")
+                    Log.d("LoginFragment", "Facebook login successful: ${result.accessToken.token}")
+                    Log.d("LoginFragment", "Facebook user ID: ${result.accessToken.userId}")
+                    Log.d("LoginFragment", "Facebook permissions: ${result.accessToken.permissions}")
+                    viewModel.signInWithFacebook(result.accessToken)
+                }
 
-            override fun onCancel() {
-                Log.d("LoginFragment", "FacebookCallback onCancel triggered.")
-                // Using our own toast message instead of default
-                Toast.makeText(context, "Facebook login canceled", Toast.LENGTH_SHORT).show()
-            }
+                override fun onCancel() {
+                    Log.d("LoginFragment", "FacebookCallback onCancel triggered.")
+                    // Using our own toast message instead of default
+                    Toast.makeText(context, "Facebook login canceled", Toast.LENGTH_SHORT).show()
+                }
 
-            override fun onError(error: FacebookException) {
-                Log.e("LoginFragment", "FacebookCallback onError triggered.", error)
-                // Using our own toast message instead of default
-                Toast.makeText(context, "Facebook login failed. Please try again", Toast.LENGTH_LONG).show()
-            }
-        })
+                override fun onError(error: FacebookException) {
+                    Log.e("LoginFragment", "FacebookCallback onError triggered: ${error.message}", error)
+                    
+                    // More detailed error logging
+                    when (error) {
+                        is com.facebook.FacebookAuthorizationException -> {
+                            Log.e("LoginFragment", "Facebook Authorization Exception. Check FB App ID/Secret")
+                        }
+                        is com.facebook.FacebookOperationCanceledException -> {
+                            Log.e("LoginFragment", "Facebook Operation Canceled")
+                        }
+                        is com.facebook.FacebookServiceException -> {
+                            val fbError = (error as com.facebook.FacebookServiceException).requestError
+                            Log.e("LoginFragment", "FacebookServiceException: ${fbError.errorCode} - ${fbError.errorMessage}")
+                        }
+                        else -> {
+                            Log.e("LoginFragment", "Generic Facebook Error", error)
+                        }
+                    }
+                    
+                    // Using our own toast message instead of default
+                    Toast.makeText(context, "Facebook login failed: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            })
+        } catch (e: Exception) {
+            Log.e("LoginFragment", "Exception during Facebook login setup", e)
+            Toast.makeText(context, "Error setting up Facebook login", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun observeViewModel() {
@@ -251,6 +286,14 @@ class LoginFragment : Fragment() {
             if (shouldNavigate) {
                 Log.d("LoginFragment", "Navigating to home fragment")
                 findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+                viewModel.onNavigationHandled()
+            }
+        }
+        
+        viewModel.navigateToResetPassword.observe(viewLifecycleOwner) { shouldNavigate ->
+            if (shouldNavigate) {
+                Log.d("LoginFragment", "Navigating to reset password fragment")
+                findNavController().navigate(R.id.action_loginFragment_to_resetPasswordFragment)
                 viewModel.onNavigationHandled()
             }
         }

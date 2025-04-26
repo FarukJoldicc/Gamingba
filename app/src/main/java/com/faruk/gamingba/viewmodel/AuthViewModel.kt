@@ -25,6 +25,8 @@ import kotlinx.coroutines.tasks.await
 import com.facebook.AccessToken
 import com.google.firebase.auth.FacebookAuthProvider
 import com.facebook.login.LoginManager
+import kotlinx.coroutines.delay
+import com.google.firebase.auth.ActionCodeSettings
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -79,6 +81,13 @@ class AuthViewModel @Inject constructor(
     private val _navigateToVerifyEmail = MutableLiveData<String?>()
     val navigateToVerifyEmail: LiveData<String?> = _navigateToVerifyEmail
 
+    // Password reset navigation
+    private val _navigateToResetPassword = MutableLiveData<Boolean>()
+    val navigateToResetPassword: LiveData<Boolean> = _navigateToResetPassword
+    
+    private val _navigateToCreateNewPassword = MutableLiveData<String?>()
+    val navigateToCreateNewPassword: LiveData<String?> = _navigateToCreateNewPassword
+
     // Error messages for each field
     private val _firstNameError = MutableLiveData<String?>()
     val firstNameError: LiveData<String?> = _firstNameError
@@ -88,6 +97,29 @@ class AuthViewModel @Inject constructor(
 
     private val _passwordError = MutableLiveData<String?>()
     val passwordError: LiveData<String?> = _passwordError
+
+    // Reset password fields and errors
+    val resetEmail = MutableStateFlow("")
+    val resetEmailLiveData = resetEmail.asLiveData()
+    
+    private val _resetPasswordError = MutableStateFlow<String?>(null)
+    val resetPasswordError: StateFlow<String?> = _resetPasswordError
+    
+    private val _resetPasswordSuccess = MutableStateFlow<String?>(null)
+    val resetPasswordSuccess: StateFlow<String?> = _resetPasswordSuccess
+    
+    // New password fields and errors
+    val newPassword = MutableStateFlow("")
+    val newPasswordLiveData = newPassword.asLiveData()
+    
+    val confirmPassword = MutableStateFlow("")
+    val confirmPasswordLiveData = confirmPassword.asLiveData()
+    
+    private val _newPasswordError = MutableStateFlow<String?>(null)
+    val newPasswordError: StateFlow<String?> = _newPasswordError
+    
+    private val _confirmPasswordError = MutableStateFlow<String?>(null)
+    val confirmPasswordError: StateFlow<String?> = _confirmPasswordError
 
     // Track field interaction
     private val _firstNameTouched = MutableLiveData<Boolean>()
@@ -286,29 +318,53 @@ class AuthViewModel @Inject constructor(
         Log.d("AuthViewModel", "Starting registration process")
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                _registrationState.postValue(RegistrationState.Loading)
-                _error.postValue(null)
-
-                // Use repository.register to create user and get FirebaseUser
+                Log.d("AuthViewModel", "Calling repository.registerAndGetUser")
                 val result = repository.registerAndGetUser(email, password, firstName)
+                Log.d("AuthViewModel", "Repository returned result: $result")
 
                 result.onSuccess { firebaseUser ->
                     Log.d("AuthViewModel", "Registration successful, sending verification email.")
-                    // Send verification email
-                    firebaseUser.sendEmailVerification().addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.d("AuthViewModel", "Verification email sent successfully.")
-                            _registrationState.value = RegistrationState.Success // Indicate registration part is done
-                            _navigateToVerifyEmail.value = email // Trigger navigation with email
-                        } else {
-                            Log.e("AuthViewModel", "Failed to send verification email.", task.exception)
-                            _registrationState.value = RegistrationState.Error("Registration succeeded but failed to send verification email.")
-                            _error.value = "Couldn't send verification email. Please try logging in."
-                            _navigateToLogin.value = true // Navigate to login as fallback
+                    try {
+                        // Create ActionCodeSettings for email verification with Dynamic Links
+                        val actionCodeSettings = ActionCodeSettings.newBuilder()
+                            .setUrl("https://gamingba-e4849.firebaseapp.com/action")
+                            .setHandleCodeInApp(true)
+                            .setAndroidPackageName(
+                                "com.faruk.gamingba",
+                                true,
+                                "1"
+                            )
+                            .build()
+                        Log.d("AuthViewModel", "Calling sendEmailVerification with ActionCodeSettings")
+                        firebaseUser.sendEmailVerification(actionCodeSettings).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.d("AuthViewModel", "Verification email sent successfully with Dynamic Link.")
+                                _registrationState.value = RegistrationState.Success // Indicate registration part is done
+                                _navigateToVerifyEmail.value = email // Trigger navigation with email
+                            } else {
+                                Log.e("AuthViewModel", "Failed to send verification email with Dynamic Link.", task.exception)
+                                // Try fallback to standard verification if Dynamic Link fails
+                                firebaseUser.sendEmailVerification().addOnCompleteListener { fallbackTask ->
+                                    if (fallbackTask.isSuccessful) {
+                                        Log.d("AuthViewModel", "Standard verification email sent successfully as fallback.")
+                                        _registrationState.value = RegistrationState.Success
+                                        _navigateToVerifyEmail.value = email
+                                    } else {
+                                        Log.e("AuthViewModel", "Failed to send standard verification email.", fallbackTask.exception)
+                                        _registrationState.value = RegistrationState.Error("Registration succeeded but failed to send verification email.")
+                                        _error.value = "Couldn't send verification email. Please try logging in."
+                                        _navigateToLogin.value = true // Navigate to login as fallback
+                                    }
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.e("AuthViewModel", "Exception while sending verification email: ${e.message}", e)
+                        _registrationState.value = RegistrationState.Error("Exception while sending verification email.")
+                        _error.value = "Exception while sending verification email: ${e.message}"
                     }
                 }.onFailure { exception ->
-                    Log.e("AuthViewModel", "Registration failed: ${exception.message}")
+                    Log.e("AuthViewModel", "Registration failed: ${exception.message}", exception)
                     val errorMessage = when {
                         exception.message?.contains("email") == true -> "This email is already registered"
                         exception.message?.contains("password") == true -> "Password is too weak"
@@ -322,7 +378,7 @@ class AuthViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Registration exception: ${e.message}")
+                Log.e("AuthViewModel", "Registration exception: ${e.message}", e)
                 val errorMessage = "An unexpected error occurred. Please try again"
                 // Post error back to the main thread from IO dispatcher
                 withContext(Dispatchers.Main) {
@@ -331,6 +387,192 @@ class AuthViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    // Password Reset Functionality
+    fun validateResetEmail(): Boolean {
+        _resetPasswordError.value = null
+        
+        if (resetEmail.value.isEmpty()) {
+            _resetPasswordError.value = "Email is required"
+            return false
+        } else if (!validateEmail(resetEmail.value)) {
+            _resetPasswordError.value = "Please enter a valid email address"
+            return false
+        }
+        
+        return true
+    }
+    
+    fun sendPasswordResetEmail() {
+        if (!validateResetEmail()) {
+            return
+        }
+        
+        viewModelScope.launch {
+            isLoading.value = true
+            _resetPasswordError.value = null
+            _resetPasswordSuccess.value = null
+            
+            try {
+                Log.d("AuthViewModel", "Sending password reset email to: ${resetEmail.value}")
+                
+                // Explicitly use the getInstance() to ensure correct Firebase instance
+                val firebaseAuth = FirebaseAuth.getInstance()
+                
+                // Check network connectivity
+                if (!isNetworkAvailable()) {
+                    _resetPasswordError.value = "Network error. Please check your internet connection and try again."
+                    isLoading.value = false
+                    return@launch
+                }
+                
+                // Create ActionCodeSettings with Firebase Dynamic Links
+                val actionCodeSettings = ActionCodeSettings.newBuilder()
+                    .setUrl("https://gamingba-e4849.firebaseapp.com/action")
+                    .setHandleCodeInApp(true)
+                    .setAndroidPackageName(
+                        "com.faruk.gamingba",
+                        true,
+                        "1"
+                    )
+                    .build()
+                
+                // Use the password reset with ActionCodeSettings
+                firebaseAuth.sendPasswordResetEmail(resetEmail.value.trim(), actionCodeSettings).await()
+                
+                Log.d("AuthViewModel", "Password reset email sent successfully with Dynamic Link")
+                _resetPasswordSuccess.value = "We've sent a password reset link to your email"
+                
+                // Wait for 3 seconds then navigate back to login
+                delay(3000)
+                _navigateToLogin.value = true
+                
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Failed to send password reset email: ${e.message}", e)
+                _resetPasswordError.value = when {
+                    e.message?.contains("user record") == true -> "No account exists with this email"
+                    e.message?.contains("network") == true -> "Network error. Please check your connection"
+                    e.message?.contains("INVALID_EMAIL") == true -> "Invalid email format"
+                    e.message?.contains("TOO_MANY_ATTEMPTS_TRY_LATER") == true -> "Too many attempts. Please try again later"
+                    e.message?.contains("ERROR_USER_NOT_FOUND") == true -> "No account found with this email"
+                    else -> "Failed to send password reset email. Please try again later."
+                }
+            } finally {
+                isLoading.value = false
+            }
+        }
+    }
+    
+    // Helper function to check network connectivity
+    private fun isNetworkAvailable(): Boolean {
+        // In a real implementation, you'd check network connectivity
+        // For this example, we'll assume network is available
+        return true
+    }
+    
+    // Validate new password
+    fun validateNewPassword(): Boolean {
+        _newPasswordError.value = null
+        
+        if (newPassword.value.isEmpty()) {
+            _newPasswordError.value = "New password is required"
+            return false
+        } else if (!validatePassword(newPassword.value)) {
+            _newPasswordError.value = "Password must be at least 6 characters"
+            return false
+        }
+        
+        return true
+    }
+    
+    // Validate confirm password
+    fun validateConfirmPassword(): Boolean {
+        _confirmPasswordError.value = null
+        
+        if (confirmPassword.value.isEmpty()) {
+            _confirmPasswordError.value = "Please confirm your password"
+            return false
+        } else if (confirmPassword.value != newPassword.value) {
+            _confirmPasswordError.value = "Passwords don't match"
+            return false
+        }
+        
+        return true
+    }
+    
+    // Complete password reset
+    fun confirmPasswordReset(oobCode: String) {
+        if (!validateNewPassword() || !validateConfirmPassword()) {
+            return
+        }
+        
+        viewModelScope.launch {
+            isLoading.value = true
+            _resetPasswordError.value = null
+            
+            try {
+                auth.confirmPasswordReset(oobCode, newPassword.value).await()
+                _resetPasswordSuccess.value = "Your password has been reset successfully"
+                
+                // Wait for 2 seconds then navigate back to login
+                delay(2000)
+                _navigateToLogin.value = true
+                
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Failed to reset password", e)
+                _resetPasswordError.value = when {
+                    e.message?.contains("expired") == true -> "Password reset link has expired. Please request a new one"
+                    e.message?.contains("invalid") == true -> "Invalid reset link. Please request a new one"
+                    else -> "Failed to reset password. Please try again"
+                }
+            } finally {
+                isLoading.value = false
+            }
+        }
+    }
+    
+    fun verifyPasswordResetCode(oobCode: String) {
+        viewModelScope.launch {
+            isLoading.value = true
+            _resetPasswordError.value = null
+            
+            try {
+                Log.d("AuthViewModel", "Verifying password reset code: $oobCode")
+                
+                if (oobCode.isBlank()) {
+                    Log.e("AuthViewModel", "Empty oobCode provided")
+                    _resetPasswordError.value = "Invalid reset code"
+                    return@launch
+                }
+                
+                val email = auth.verifyPasswordResetCode(oobCode).await()
+                Log.d("AuthViewModel", "Code verification successful for email: $email")
+                
+                // Set the email in the state
+                resetEmail.value = email
+                
+                // Navigate to create new password screen with the verified code
+                _navigateToCreateNewPassword.value = oobCode
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Invalid or expired reset code: ${e.message}", e)
+                _resetPasswordError.value = when {
+                    e.message?.contains("expired") == true -> "Password reset link has expired. Please request a new one"
+                    e.message?.contains("invalid") == true -> "Invalid reset link. Please request a new one"
+                    e.message?.contains("INVALID_OOB_CODE") == true -> "Invalid reset code. Please request a new password reset link"
+                    else -> "Password reset link is invalid or has expired"
+                }
+                // Navigate back to reset email page after showing error
+                delay(3000)
+                _navigateToResetPassword.value = true
+            } finally {
+                isLoading.value = false
+            }
+        }
+    }
+    
+    fun onForgotPasswordClicked() {
+        _navigateToResetPassword.value = true
     }
 
     fun clearAuthResult() {
@@ -364,6 +606,25 @@ class AuthViewModel @Inject constructor(
         _navigateToRegister.value = false
         _navigateToHome.value = false
         _navigateToVerifyEmail.value = null // Reset verify email navigation trigger
+        _navigateToResetPassword.value = false
+        _navigateToCreateNewPassword.value = null
+        
+        // Clear any success/error messages when navigating away
+        _resetPasswordError.value = null
+        _resetPasswordSuccess.value = null
+        _newPasswordError.value = null
+        _confirmPasswordError.value = null
+    }
+
+    // Reset all fields related to password reset
+    fun clearPasswordResetData() {
+        resetEmail.value = ""
+        newPassword.value = ""
+        confirmPassword.value = ""
+        _resetPasswordError.value = null
+        _resetPasswordSuccess.value = null
+        _newPasswordError.value = null
+        _confirmPasswordError.value = null
     }
 
     // Updated setters with field touch tracking
@@ -386,6 +647,24 @@ class AuthViewModel @Inject constructor(
         _passwordTouched.value = true
         password.value = text
         validateInput()
+    }
+
+    fun setResetEmail(value: String) {
+        resetEmail.value = value
+        validateResetEmail()
+    }
+    
+    fun setNewPassword(value: String) {
+        newPassword.value = value
+        validateNewPassword()
+        if (confirmPassword.value.isNotEmpty()) {
+            validateConfirmPassword()
+        }
+    }
+    
+    fun setConfirmPassword(value: String) {
+        confirmPassword.value = value
+        validateConfirmPassword()
     }
 
     fun signInWithGoogle(idToken: String) {

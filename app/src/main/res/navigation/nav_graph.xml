@@ -23,6 +23,16 @@
             app:destination="@id/verifyEmailFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_resetPasswordFragment"
+            app:destination="@id/resetPasswordFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_createNewPasswordFragment"
+            app:destination="@id/createNewPasswordFragment">
+            <argument
+                android:name="oobCode"
+                app:argType="string" />
+        </action>
     </fragment>
 
     <fragment
@@ -67,6 +77,10 @@
         <argument
             android:name="email"
             app:argType="string" />
+        <argument
+            android:name="shouldSendEmail"
+            app:argType="boolean"
+            android:defaultValue="true" />
         <action
             android:id="@+id/action_verifyEmailFragment_to_loginFragment"
             app:destination="@id/loginFragment"
@@ -77,6 +91,33 @@
             app:destination="@id/homeFragment"
             app:popUpTo="@id/verifyEmailFragment"
             app:popUpToInclusive="true"/>
+    </fragment>
+    
+    <fragment
+        android:id="@+id/resetPasswordFragment"
+        android:name="com.faruk.gamingba.view.fragment.ResetPasswordFragment"
+        android:label="ResetPasswordFragment"
+        tools:layout="@layout/fragment_reset_password">
+        <action
+            android:id="@+id/action_resetPasswordFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/resetPasswordFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    
+    <fragment
+        android:id="@+id/createNewPasswordFragment"
+        android:name="com.faruk.gamingba.view.fragment.CreateNewPasswordFragment"
+        android:label="CreateNewPasswordFragment"
+        tools:layout="@layout/fragment_create_new_password">
+        <argument
+            android:name="oobCode"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_createNewPasswordFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/createNewPasswordFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
 </navigation>
