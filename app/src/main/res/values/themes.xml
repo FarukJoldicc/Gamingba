@@ -1,9 +1,20 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Gamingba" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<resources>
+
+    <style name="Theme.Gamingba" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Splash screen customization for Android 12+ and SplashScreen library -->
+        <item name="android:windowSplashScreenBackground">@color/background_color</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo2</item>
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="android:windowSplashScreenBrandingImage">@null</item>
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+        <item name="postSplashScreenTheme">@style/Theme.Gamingba</item>
+
+        <!-- Normal Theme settings -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary</item>
+        <item name="colorOnPrimary">@color/primary</item>
+        <!-- ... -->
     </style>
 
-    <style name="Theme.Gamingba" parent="Base.Theme.Gamingba" />
 </resources>

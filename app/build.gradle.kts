@@ -51,6 +51,7 @@ kapt {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
@@ -73,12 +74,11 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
     implementation (libs.androidx.navigation.ui.ktx)
-    implementation(libs.hilt.android)
-    implementation (libs.material.vlatestversion)
+    implementation (libs.material)
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.play.services)
     
     // Firebase Dynamic Links
-    implementation("com.google.firebase:firebase-dynamic-links-ktx:21.1.0")
+    implementation("com.google.firebase:firebase-dynamic-links-ktx:22.1.0")
 }

@@ -40,12 +40,11 @@ kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-cor
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-material-vlatestversion = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-navigation-safeargs = { id = "androidx.navigation.safeargs", version.ref = "navigationUiKtx" }
-navigation-safeargs-ktx = { id = "androidx.navigation.safeargs.kotlin", version.ref = "navigationUiKtx" }
+navigation-safeargs = { id = "androidx.navigation.safeargs", version = "2.8.0" }
+navigation-safeargs-ktx = { id = "androidx.navigation.safeargs.kotlin", version = "2.8.0" }
 
