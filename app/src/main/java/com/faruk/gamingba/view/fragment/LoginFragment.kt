@@ -332,6 +332,11 @@ class LoginFragment : Fragment() {
                 }
             }
         }
+
+        // Observe login success message (no navigation delay)
+        viewModel.loginSuccessMessage.observe(viewLifecycleOwner) { message ->
+            // No action needed here, just triggers UI update via data binding
+        }
     }
 
     override fun onDestroyView() {

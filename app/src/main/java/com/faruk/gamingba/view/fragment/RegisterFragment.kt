@@ -37,6 +37,10 @@ import android.widget.Toast
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
+import android.widget.FrameLayout
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
@@ -274,32 +278,19 @@ class RegisterFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        // Remove or comment out the old RegistrationState observer if VerifyEmail is the primary flow
-        /*
-        viewModel.registrationState.observe(viewLifecycleOwner) { state ->
-            when (state) {
-                is RegistrationState.Success -> {
-                    // Navigate to login fragment - Now handled by navigateToVerifyEmail
-                    // findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+        // Show registration success message and delay navigation
+        viewModel.registrationSuccessMessage.observe(viewLifecycleOwner) { message ->
+            if (message != null) {
+                // Show message for 1.5 seconds, then navigate
+                viewLifecycleOwner.lifecycleScope.launch {
+                    delay(1500)
+                    val email = viewModel.email.value
+                    if (findNavController().currentDestination?.id == R.id.registerFragment) {
+                        val action = RegisterFragmentDirections.actionRegisterFragmentToVerifyEmailFragment(email)
+                        findNavController().navigate(action)
+                        viewModel.onNavigationHandled()
+                    }
                 }
-                is RegistrationState.Error -> {
-                    // Error is already handled by the ViewModel and displayed in the layout
-                }
-                is RegistrationState.Loading -> {
-                    // Loading state is handled by the layout
-                }
-            }
-        }
-        */
-
-        // Observe navigation to Verify Email screen
-        viewModel.navigateToVerifyEmail.observe(viewLifecycleOwner) { email ->
-            Log.d("RegisterFragment", "Observer triggered for navigateToVerifyEmail: $email")
-            email?.let {
-                Log.d("RegisterFragment", "Navigating to Verify Email screen for $email")
-                val action = RegisterFragmentDirections.actionRegisterFragmentToVerifyEmailFragment(it)
-                findNavController().navigate(action)
-                viewModel.onNavigationHandled() // Reset the trigger
             }
         }
 

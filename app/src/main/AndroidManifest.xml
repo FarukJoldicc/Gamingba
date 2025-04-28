@@ -22,12 +22,10 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- Main launcher intent filter -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
             <!-- Dynamic Links intent filter -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -37,7 +35,6 @@
                     android:host="gamingba.page.link"
                     android:scheme="https" />
             </intent-filter>
-
             <!-- Firebase Hosting intent filter -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
