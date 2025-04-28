@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="android.view.View"/>
         <import type="com.faruk.gamingba.viewmodel.AuthViewModel" />
         <variable
             name="viewModel"
@@ -56,13 +57,13 @@
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                
-                <!-- Fields Container (fixed layout) -->
+
+                <!-- Main Content -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    
+
                     <!-- First Name Field -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -111,6 +112,19 @@
                             app:layout_constraintEnd_toEndOf="parent" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
                     
+                    <!-- First Name Error -->
+                    <TextView
+                        android:id="@+id/firstNameErrorText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginTop="-15dp"
+                        android:text="@{viewModel.firstNameError}"
+                        android:textColor="#FF4444"
+                        android:textSize="12sp"
+                        android:visibility="@{viewModel.firstNameError != null ? android.view.View.VISIBLE : android.view.View.INVISIBLE}" />
+                    
                     <!-- Email Field -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -158,6 +172,19 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
+                    
+                    <!-- Email Error -->
+                    <TextView
+                        android:id="@+id/emailErrorText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginTop="-16dp"
+                        android:text="@{viewModel.emailError}"
+                        android:textColor="#FF4444"
+                        android:textSize="12sp"
+                        android:visibility="@{viewModel.emailError != null ? android.view.View.VISIBLE : android.view.View.INVISIBLE}" />
                     
                     <!-- Password Field -->
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -218,61 +245,52 @@
                             app:layout_constraintEnd_toEndOf="@id/passwordBackground"
                             app:layout_constraintBottom_toBottomOf="@id/passwordBackground" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
-                </LinearLayout>
-                
-                <!-- Error Messages (Overlays) -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
                     
-                    <!-- First Name Error -->
-                    <TextView
-                        android:id="@+id/firstNameErrorText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp"
-                        android:text="@{viewModel.firstNameError}"
-                        android:textColor="#FF4444"
-                        android:textSize="12sp"
-                        android:visibility="@{viewModel.firstNameError != null ? android.view.View.VISIBLE : android.view.View.GONE}"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:layout_marginTop="84dp" />
-                        
-                    <!-- Email Error -->
-                    <TextView
-                        android:id="@+id/emailErrorText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp"
-                        android:text="@{viewModel.emailError}"
-                        android:textColor="#FF4444"
-                        android:textSize="12sp"
-                        android:visibility="@{viewModel.emailError != null ? android.view.View.VISIBLE : android.view.View.GONE}"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:layout_marginTop="168dp" />
-                        
                     <!-- Password Error -->
                     <TextView
                         android:id="@+id/passwordErrorText"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginEnd="16dp"
+                        android:layout_marginTop="-14dp"
                         android:text="@{viewModel.passwordError}"
                         android:textColor="#FF4444"
                         android:textSize="12sp"
-                        android:visibility="@{viewModel.passwordError != null ? android.view.View.VISIBLE : android.view.View.GONE}"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:layout_marginTop="251dp" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                        android:visibility="@{viewModel.passwordError != null ? android.view.View.VISIBLE : android.view.View.INVISIBLE}" />
+                </LinearLayout>
+
+                <!-- Registration Success Message Overlay (styled like login error, with spinner) -->
+                <LinearLayout
+                    android:id="@+id/registrationSuccessLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@android:color/transparent"
+                    android:visibility="@{viewModel.registrationSuccessMessage != null ? View.VISIBLE : View.GONE}"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp">
+
+                    <TextView
+                        android:id="@+id/registrationSuccessText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{viewModel.registrationSuccessMessage}"
+                        android:textColor="@color/success_green"
+                        android:textSize="12sp"
+                        android:background="@android:color/transparent"/>
+
+                    <ProgressBar
+                        android:id="@+id/registrationSuccessSpinner"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="8dp"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@color/success_green"
+                        android:background="@android:color/transparent"/>
+                </LinearLayout>
             </FrameLayout>
 
             <Button

@@ -137,6 +137,12 @@ class AuthViewModel @Inject constructor(
     private val _loginError = MutableStateFlow<String?>(null)
     val loginError: StateFlow<String?> = _loginError
 
+    private val _registrationSuccessMessage = MutableLiveData<String?>()
+    val registrationSuccessMessage: LiveData<String?> = _registrationSuccessMessage
+
+    private val _loginSuccessMessage = MutableLiveData<String?>()
+    val loginSuccessMessage: LiveData<String?> = _loginSuccessMessage
+
     init {
         _currentUser.value = repository.getCurrentUser()
         fetchUserData()
@@ -166,11 +172,15 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun validatePassword(password: String): Boolean {
-        return password.length >= 6
+        // Remove all whitespace (spaces, tabs, newlines) before checking length
+        val cleaned = password.replace("\\s+".toRegex(), "")
+        return cleaned.length >= 6
     }
 
     private fun validateFirstName(firstName: String): Boolean {
-        return firstName.isNotBlank() && firstName.length >= 2
+        // Remove all whitespace (spaces, tabs, newlines) before checking length
+        val cleaned = firstName.replace("\\s+".toRegex(), "")
+        return cleaned.isNotBlank() && cleaned.length >= 2
     }
 
     fun validateInput(includeFirstName: Boolean = true): ValidationState {
@@ -267,6 +277,9 @@ class AuthViewModel @Inject constructor(
                         _currentUser.value = firebaseUser
                         _authResult.value = Result.success(Unit) // Signal success
                         fetchUserData()
+                        _loginSuccessMessage.value = "Login successful! Redirecting..."
+                        // Delay navigation to home so user sees the message
+                        kotlinx.coroutines.delay(1000)
                         _navigateToHome.value = true // Navigate to home
                     } else {
                         // Email not verified
@@ -339,29 +352,31 @@ class AuthViewModel @Inject constructor(
                         firebaseUser.sendEmailVerification(actionCodeSettings).addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 Log.d("AuthViewModel", "Verification email sent successfully with Dynamic Link.")
-                                _registrationState.value = RegistrationState.Success // Indicate registration part is done
-                                _navigateToVerifyEmail.value = email // Trigger navigation with email
+                                _registrationState.postValue(RegistrationState.Success)
+                                _registrationSuccessMessage.postValue("Registration successful! Redirecting...")
+                                _navigateToVerifyEmail.postValue(email)
                             } else {
                                 Log.e("AuthViewModel", "Failed to send verification email with Dynamic Link.", task.exception)
                                 // Try fallback to standard verification if Dynamic Link fails
                                 firebaseUser.sendEmailVerification().addOnCompleteListener { fallbackTask ->
                                     if (fallbackTask.isSuccessful) {
                                         Log.d("AuthViewModel", "Standard verification email sent successfully as fallback.")
-                                        _registrationState.value = RegistrationState.Success
-                                        _navigateToVerifyEmail.value = email
+                                        _registrationState.postValue(RegistrationState.Success)
+                                        _registrationSuccessMessage.postValue("Registration successful! Redirecting...")
+                                        _navigateToVerifyEmail.postValue(email)
                                     } else {
                                         Log.e("AuthViewModel", "Failed to send standard verification email.", fallbackTask.exception)
-                                        _registrationState.value = RegistrationState.Error("Registration succeeded but failed to send verification email.")
-                                        _error.value = "Couldn't send verification email. Please try logging in."
-                                        _navigateToLogin.value = true // Navigate to login as fallback
+                                        _registrationState.postValue(RegistrationState.Error("Registration succeeded but failed to send verification email."))
+                                        _error.postValue("Couldn't send verification email. Please try logging in.")
+                                        _navigateToLogin.postValue(true)
                                     }
                                 }
                             }
                         }
                     } catch (e: Exception) {
-                        Log.e("AuthViewModel", "Exception while sending verification email: ${e.message}", e)
-                        _registrationState.value = RegistrationState.Error("Exception while sending verification email.")
-                        _error.value = "Exception while sending verification email: ${e.message}"
+                        Log.e("AuthViewModel", "Exception while sending verification email: ", e)
+                        _registrationState.postValue(RegistrationState.Error("Exception while sending verification email."))
+                        _error.postValue("Exception while sending verification email: ${e.message}")
                     }
                 }.onFailure { exception ->
                     Log.e("AuthViewModel", "Registration failed: ${exception.message}", exception)
@@ -608,7 +623,8 @@ class AuthViewModel @Inject constructor(
         _navigateToVerifyEmail.value = null // Reset verify email navigation trigger
         _navigateToResetPassword.value = false
         _navigateToCreateNewPassword.value = null
-        
+        _registrationSuccessMessage.value = null
+        _loginSuccessMessage.value = null
         // Clear any success/error messages when navigating away
         _resetPasswordError.value = null
         _resetPasswordSuccess.value = null

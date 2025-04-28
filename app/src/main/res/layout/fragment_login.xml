@@ -66,6 +66,39 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
+                    <!-- Success Message Overlay (styled exactly like error message, with spinner) -->
+                    <LinearLayout
+                        android:id="@+id/loginSuccessLayout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginBottom="-15dp"
+                        android:background="@android:color/transparent"
+                        android:visibility="@{viewModel.loginSuccessMessage != null ? View.VISIBLE : View.INVISIBLE}">
+
+                        <TextView
+                            android:id="@+id/loginSuccessText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@{viewModel.loginSuccessMessage}"
+                            android:textColor="@color/success_green"
+                            android:textSize="12sp"
+                            android:background="@android:color/transparent"/>
+
+                        <ProgressBar
+                            android:id="@+id/loginSuccessSpinner"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginStart="8dp"
+                            android:indeterminate="true"
+                            android:indeterminateTint="@color/success_green"
+                            android:background="@android:color/transparent"/>
+                    </LinearLayout>
+
                     <!-- Email Field -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -291,18 +324,6 @@
                 android:visibility="gone" />
 
         </LinearLayout>
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:visibility="@{viewModel.isLoading ? android.view.View.VISIBLE : android.view.View.GONE}"
-            android:indeterminateTint="@color/button_cyan"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
