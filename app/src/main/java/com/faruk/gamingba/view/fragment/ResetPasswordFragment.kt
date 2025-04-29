@@ -61,29 +61,31 @@ class ResetPasswordFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 viewModel.setResetEmail(s?.toString() ?: "")
+                // Clear error message when user starts typing
+                if (s?.isNotEmpty() == true) {
+                    viewModel.clearResetPasswordError()
+                }
             }
         })
     }
 
     private fun observeViewModel() {
-        // Observe for navigation to login
-        viewModel.navigateToLogin.observe(viewLifecycleOwner) { shouldNavigate ->
-            if (shouldNavigate) {
-                findNavController().navigateUp()
-                viewModel.onNavigationHandled()
-            }
-        }
-
-        // Observe error and success messages
+        // Observe error message
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.resetPasswordError.collectLatest { error ->
                 // Error is bound directly to the TextView via data binding
+                // No need for additional handling here
             }
         }
 
+        // Observe success message
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.resetPasswordSuccess.collectLatest { success ->
-                // Success message is bound directly to the TextView via data binding
+                if (success != null) {
+                    // Show success view and hide form content
+                    binding.emailSentView.visibility = View.VISIBLE
+                    binding.formContent.visibility = View.GONE
+                }
             }
         }
     }
