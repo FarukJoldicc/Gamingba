@@ -3,6 +3,8 @@ package com.faruk.gamingba.util
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
+import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
 import com.google.android.material.textfield.TextInputEditText
 import com.faruk.gamingba.R
@@ -55,4 +57,10 @@ fun setOnTextChangedListener(editText: TextInputEditText, onTextChanged: ((Any?)
 
     editText.addTextChangedListener(watcher)
     editText.setTag(tag, watcher)
+}
+
+@BindingAdapter("imageTint")
+fun setImageTint(imageView: ImageView, colorRes: Int) {
+    val color = ContextCompat.getColor(imageView.context, colorRes)
+    imageView.setColorFilter(color)
 }

@@ -1,10 +1,10 @@
 package com.faruk.gamingba.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
+import com.faruk.gamingba.R
 import com.faruk.gamingba.model.repository.AuthRepository
-import com.faruk.gamingba.model.state.HomeViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,23 +15,49 @@ import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class NavigationViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val savedStateHandle: SavedStateHandle,
     private val database: FirebaseDatabase
 ) : ViewModel() {
 
-    // We cannot inject NavigationViewModel directly, so we'll need to observe it from the fragment
+    private val _selectedTabId = MutableStateFlow(0) // Default to home tab
+    val selectedTabId: StateFlow<Int> = _selectedTabId
+    
     private val _userName = MutableStateFlow("User")
     val userName: StateFlow<String> = _userName
     
-    private val _state = MutableStateFlow(HomeViewState())
-    val state: StateFlow<HomeViewState> = _state
+    private var navController: NavController? = null
     
     init {
         loadUserData()
     }
-
+    
+    fun setNavController(controller: NavController) {
+        navController = controller
+    }
+    
+    fun onTabSelected(tabId: Int) {
+        _selectedTabId.value = tabId
+        navigateToTab(tabId)
+    }
+    
+    private fun navigateToTab(tabId: Int) {
+        navController?.let { controller ->
+            val destination = when (tabId) {
+                0 -> R.id.homeFragment
+                1 -> R.id.searchFragment
+                2 -> R.id.profileFragment
+                else -> return
+            }
+            
+            viewModelScope.launch {
+                if (controller.currentDestination?.id != destination) {
+                    controller.navigate(destination)
+                }
+            }
+        }
+    }
+    
     private fun loadUserData() {
         viewModelScope.launch {
             try {
@@ -49,22 +75,17 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                // Error handling
-            }
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            try {
-                authRepository.logout()
-            } catch (e: Exception) {
-                // Handle error
+                // Keep default value if error occurs
             }
         }
     }
     
-    fun setUserName(name: String) {
-        _userName.value = name
+    fun updateSelectedTabBasedOnDestination(destinationId: Int) {
+        _selectedTabId.value = when (destinationId) {
+            R.id.homeFragment -> 0
+            R.id.searchFragment -> 1
+            R.id.profileFragment -> 2
+            else -> _selectedTabId.value // Keep current selection if unknown destination
+        }
     }
 } 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Custom bottom navigation style with text to the right of icon for selected items -->
+    <style name="Widget.App.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="android:background">@color/background_color</item>
+        <item name="itemIconTint">@color/tab_item_color</item>
+        <item name="itemTextColor">@color/tab_item_color</item>
+        <item name="itemActiveIndicatorStyle">@style/App.ActiveIndicatorStyle</item>
+        <item name="labelVisibilityMode">selected</item>
+        <item name="itemPaddingTop">8dp</item>
+        <item name="itemPaddingBottom">8dp</item>
+    </style>
+    
+    <style name="App.ActiveIndicatorStyle" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/tab_selected_background</item>
+        <item name="android:width">72dp</item>
+        <item name="android:height">36dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.SmallComponent</item>
+    </style>
+    
+    <style name="ShapeAppearance.App.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+</resources> 
