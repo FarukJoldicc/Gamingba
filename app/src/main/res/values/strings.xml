@@ -47,4 +47,11 @@
     <string name="reset_button">Reset</string>
     <string name="password_reset_success">Your password has been reset successfully!</string>
     <string name="password_reset_email_sent">We\'ve sent a password reset link to your email</string>
+    <string name="hello_user">Hello, %1$s</string>
+    <string name="find_favorite_games">Let\'s find your favorite games</string>
+    
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_profile">Profile</string>
 </resources>

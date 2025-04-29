@@ -6,10 +6,16 @@ import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.faruk.gamingba.databinding.ActivityMainBinding
+import com.faruk.gamingba.viewmodel.NavigationViewModel
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import android.content.Context
@@ -18,9 +24,19 @@ import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager.LayoutParams
 import android.util.Log
-import androidx.navigation.NavController
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.ktx.Firebase
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.navigation.ui.setupWithNavController
+import android.widget.LinearLayout
+import android.content.res.ColorStateList
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import com.faruk.gamingba.view.fragment.HomeFragment
 
 private const val TAG = "MainActivity"
 
@@ -28,15 +44,52 @@ private const val TAG = "MainActivity"
 class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
+    private lateinit var binding: ActivityMainBinding
+    private val navigationViewModel: NavigationViewModel by viewModels()
+    
+    // Tab views
+    private lateinit var homeTab: LinearLayout
+    private lateinit var searchTab: LinearLayout
+    private lateinit var profileTab: LinearLayout
+    
+    // Tab icons
+    private lateinit var homeIcon: ImageView
+    private lateinit var searchIcon: ImageView
+    private lateinit var profileIcon: ImageView
+    
+    // Tab texts
+    private lateinit var homeText: TextView
+    private lateinit var searchText: TextView
+    private lateinit var profileText: TextView
+    
+    // Colors
+    private var selectedColor = 0
+    private var unselectedColor = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        setContentView(R.layout.activity_main)
+        // Set up data binding
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding.lifecycleOwner = this
+        binding.viewModel = navigationViewModel
+
+        // Get colors
+        selectedColor = ContextCompat.getColor(this, R.color.button_cyan)
+        unselectedColor = ContextCompat.getColor(this, android.R.color.white)
 
         // Hide the Action Bar
         supportActionBar?.hide()
+
+        // Get references to views
+        homeIcon = binding.bottomNavigation.homeIcon
+        searchIcon = binding.bottomNavigation.searchIcon
+        profileIcon = binding.bottomNavigation.profileIcon
+        
+        homeText = binding.bottomNavigation.homeText
+        searchText = binding.bottomNavigation.searchText
+        profileText = binding.bottomNavigation.profileText
 
         // Set up error handling
         setupErrorHandling()
@@ -45,6 +98,33 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
+        
+        // Provide NavController to ViewModel
+        navigationViewModel.setNavController(navController)
+        
+        // Setup bottom navigation visibility and synchronization
+        setupNavigation()
+
+        // Listen for tab selection changes
+        lifecycleScope.launch {
+            navigationViewModel.selectedTabId.collect { tabId ->
+                updateTabAppearance(tabId)
+            }
+        }
+
+        // Listen for username changes to update the Home tab text
+        lifecycleScope.launch {
+            navigationViewModel.userName.collectLatest { name ->
+                homeText.text = getString(R.string.nav_home)
+                
+                // Update the HomeFragment's userName if it's currently displayed
+                val currentFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                    ?.childFragmentManager?.fragments?.firstOrNull()
+                if (currentFragment is HomeFragment) {
+                    currentFragment.binding.userName = name
+                }
+            }
+        }
 
         // Apply system bar insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -239,5 +319,56 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "Window service requested")
         }
         return super.getSystemService(name)
+    }
+
+    private fun updateTabAppearance(selectedTabId: Int) {
+        val selectedColor = ContextCompat.getColor(this, R.color.button_cyan)
+        val unselectedColor = ContextCompat.getColor(this, android.R.color.white)
+        
+        // Reset all tabs
+        homeIcon.setColorFilter(unselectedColor)
+        searchIcon.setColorFilter(unselectedColor)
+        profileIcon.setColorFilter(unselectedColor)
+        
+        homeText.visibility = View.GONE
+        searchText.visibility = View.GONE
+        profileText.visibility = View.GONE
+        
+        // Set the selected tab
+        when (selectedTabId) {
+            0 -> {
+                homeIcon.setColorFilter(selectedColor)
+                homeText.setTextColor(selectedColor)
+                homeText.visibility = View.VISIBLE
+            }
+            1 -> {
+                searchIcon.setColorFilter(selectedColor)
+                searchText.setTextColor(selectedColor)
+                searchText.visibility = View.VISIBLE
+            }
+            2 -> {
+                profileIcon.setColorFilter(selectedColor)
+                profileText.setTextColor(selectedColor)
+                profileText.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun setupNavigation() {
+        // Control navigation visibility based on destination
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            // Show navigation only on main tabs (home, search, profile)
+            val showNav = when (destination.id) {
+                R.id.homeFragment, R.id.searchFragment, R.id.profileFragment -> true
+                else -> false
+            }
+            
+            binding.bottomNavigation.root.visibility = if (showNav) View.VISIBLE else View.GONE
+            
+            // Update selected tab in ViewModel based on current destination
+            if (showNav) {
+                navigationViewModel.updateSelectedTabBasedOnDestination(destination.id)
+            }
+        }
     }
 }
