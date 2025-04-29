@@ -459,9 +459,7 @@ class AuthViewModel @Inject constructor(
                 Log.d("AuthViewModel", "Password reset email sent successfully with Dynamic Link")
                 _resetPasswordSuccess.value = "We've sent a password reset link to your email"
                 
-                // Wait for 3 seconds then navigate back to login
-                delay(3000)
-                _navigateToLogin.value = true
+                // No longer automatically navigate to login
                 
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Failed to send password reset email: ${e.message}", e)
@@ -518,9 +516,8 @@ class AuthViewModel @Inject constructor(
     
     // Complete password reset
     fun confirmPasswordReset(oobCode: String) {
-        if (!validateNewPassword() || !validateConfirmPassword()) {
-            return
-        }
+        // No longer need separate validation here as it's handled by validateNewPasswordFields()
+        // which is called from the fragment before this method
         
         viewModelScope.launch {
             isLoading.value = true
@@ -528,7 +525,7 @@ class AuthViewModel @Inject constructor(
             
             try {
                 auth.confirmPasswordReset(oobCode, newPassword.value).await()
-                _resetPasswordSuccess.value = "Your password has been reset successfully"
+                _resetPasswordSuccess.value = "Password reset successful! Redirecting..."
                 
                 // Wait for 2 seconds then navigate back to login
                 delay(2000)
@@ -670,17 +667,35 @@ class AuthViewModel @Inject constructor(
         validateResetEmail()
     }
     
-    fun setNewPassword(value: String) {
+    fun setNewPassword(value: String, shouldValidate: Boolean = true) {
         newPassword.value = value
-        validateNewPassword()
-        if (confirmPassword.value.isNotEmpty()) {
-            validateConfirmPassword()
+        if (shouldValidate) {
+            validateNewPassword()
+            if (confirmPassword.value.isNotEmpty()) {
+                validateConfirmPassword()
+            }
         }
     }
     
-    fun setConfirmPassword(value: String) {
+    fun setConfirmPassword(value: String, shouldValidate: Boolean = true) {
         confirmPassword.value = value
-        validateConfirmPassword()
+        if (shouldValidate) {
+            validateConfirmPassword()
+        }
+    }
+
+    // Added method to validate both password fields at once
+    fun validateNewPasswordFields(): Boolean {
+        // Clear any previous errors first
+        _newPasswordError.value = null
+        _confirmPasswordError.value = null
+        _resetPasswordError.value = null
+        
+        // Validate both fields
+        val isNewPasswordValid = validateNewPassword()
+        val isConfirmPasswordValid = validateConfirmPassword()
+        
+        return isNewPasswordValid && isConfirmPasswordValid
     }
 
     fun signInWithGoogle(idToken: String) {
@@ -753,5 +768,17 @@ class AuthViewModel @Inject constructor(
                 isLoading.value = false
             }
         }
+    }
+
+    fun clearResetPasswordError() {
+        _resetPasswordError.value = null
+    }
+
+    fun clearNewPasswordError() {
+        _newPasswordError.value = null
+    }
+
+    fun clearConfirmPasswordError() {
+        _confirmPasswordError.value = null
     }
 }

@@ -53,6 +53,7 @@ class CreateNewPasswordFragment : Fragment() {
         setupTextWatchers()
         setupPasswordToggles()
         observeViewModel()
+        hideValidationErrors() // Initially hide all validation errors
     }
     
     private fun validateOobCode() {
@@ -76,7 +77,10 @@ class CreateNewPasswordFragment : Fragment() {
         }
 
         binding.resetButton.setOnClickListener {
-            viewModel.confirmPasswordReset(args.oobCode)
+            // Show validation errors only when button is clicked
+            if (viewModel.validateNewPasswordFields()) {
+                viewModel.confirmPasswordReset(args.oobCode)
+            }
         }
     }
 
@@ -85,7 +89,7 @@ class CreateNewPasswordFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                viewModel.setNewPassword(s?.toString() ?: "")
+                viewModel.setNewPassword(s?.toString() ?: "", false) // Don't validate yet
             }
         })
 
@@ -93,9 +97,17 @@ class CreateNewPasswordFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                viewModel.setConfirmPassword(s?.toString() ?: "")
+                viewModel.setConfirmPassword(s?.toString() ?: "", false) // Don't validate yet
             }
         })
+    }
+
+    private fun hideValidationErrors() {
+        // Hide all error messages initially using INVISIBLE instead of GONE
+        // This matches the approach used in login and register fragments
+        binding.newPasswordError.visibility = View.INVISIBLE
+        binding.confirmPasswordError.visibility = View.INVISIBLE
+        binding.generalErrorText.visibility = View.INVISIBLE
     }
 
     private fun setupPasswordToggles() {
@@ -144,30 +156,17 @@ class CreateNewPasswordFragment : Fragment() {
             }
         }
 
-        // Observe error messages
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.resetPasswordError.collectLatest { error ->
-                // Error is bound directly to the TextView via data binding
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.newPasswordError.collectLatest { error ->
-                // Error is bound directly to the TextView via data binding
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.confirmPasswordError.collectLatest { error ->
-                // Error is bound directly to the TextView via data binding
-            }
-        }
-
+        // Observe success message
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.resetPasswordSuccess.collectLatest { success ->
-                // Success message is bound directly to the TextView via data binding
+                if (success != null) {
+                    // Show success message and redirect spinner
+                    binding.successLayout.visibility = View.VISIBLE
+                }
             }
         }
+
+        // Error states are directly bound via data binding
     }
 
     override fun onDestroyView() {

@@ -3,7 +3,7 @@
     <style name="Theme.Gamingba" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Splash screen customization for Android 12+ and SplashScreen library -->
         <item name="android:windowSplashScreenBackground">@color/background_color</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo2</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
         <item name="android:windowSplashScreenAnimationDuration">1000</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
         <item name="android:windowSplashScreenBrandingImage">@null</item>
