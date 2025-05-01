@@ -4,10 +4,17 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
 import android.widget.ImageView
+import android.view.View
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.faruk.gamingba.R
+import com.faruk.gamingba.model.data.Game
+import com.faruk.gamingba.view.adapter.GameCarouselAdapter
 
 @BindingAdapter("bindText", "onTextChanged", requireAll = false)
 fun bindTextWithCallback(editText: EditText, value: String?, onTextChanged: ((Any?) -> Unit)?) {
@@ -63,4 +70,34 @@ fun setOnTextChangedListener(editText: TextInputEditText, onTextChanged: ((Any?)
 fun setImageTint(imageView: ImageView, colorRes: Int) {
     val color = ContextCompat.getColor(imageView.context, colorRes)
     imageView.setColorFilter(color)
+}
+
+@BindingAdapter("imageUrl")
+fun loadImage(imageView: ImageView, url: String?) {
+    if (!url.isNullOrEmpty()) {
+        Glide.with(imageView.context)
+            .load(url)
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .placeholder(R.drawable.placeholder_game)
+            .error(R.drawable.placeholder_game)
+            .into(imageView)
+    }
+}
+
+@BindingAdapter("gamesList")
+fun setGamesList(recyclerView: RecyclerView, games: List<Game>?) {
+    games?.let {
+        (recyclerView.adapter as? GameCarouselAdapter)?.submitList(it)
+    }
+}
+
+@BindingAdapter("isVisible")
+fun setVisibility(view: View, isVisible: Boolean) {
+    view.visibility = if (isVisible) View.VISIBLE else View.GONE
+}
+
+@BindingAdapter("ratingText")
+fun setRatingText(textView: TextView, rating: Float) {
+    val formattedRating = String.format("%.1f", rating)
+    textView.text = formattedRating
 }
