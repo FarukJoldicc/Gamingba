@@ -12,7 +12,7 @@ interface GameApiService {
     suspend fun getGames(
         @Query("key") apiKey: String,
         @Query("page") page: Int = 1,
-        @Query("page_size") pageSize: Int = 10,
+        @Query("page_size") pageSize: Int = 40,
         @Query("ordering") ordering: String = "-rating"
     ): GamesResponse
 

@@ -13,7 +13,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="320dp"
         android:layout_height="180dp"
-        android:layout_marginHorizontal="8dp"
+        android:layout_marginHorizontal="0dp"
         android:layout_marginVertical="0dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp">
@@ -68,45 +68,19 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     tools:text="Black Panther: Wakanda Forever" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <!-- Release Date -->
+                <TextView
+                    android:id="@+id/releaseDate"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:layout_marginTop="4dp"
+                    app:releaseDateText="@{game.releaseDate}"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
                     app:layout_constraintTop_toBottomOf="@id/gameName"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
-                    
-                    <!-- MetaCritic Score -->
-                    <TextView
-                        android:id="@+id/metaCritic"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="@{game.metaCritic != null ? String.valueOf(game.metaCritic) : &quot;-&quot;}"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:background="@drawable/metacritic_background"
-                        android:paddingStart="6dp"
-                        android:paddingEnd="6dp"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="2dp"
-                        android:visibility="@{game.metaCritic != null ? View.VISIBLE : View.GONE}"
-                        tools:text="85" />
-                    
-                    <!-- Publisher info, or if null show genres -->
-                    <TextView
-                        android:id="@+id/publisherInfo"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@{game.publishers.size() > 0 ? game.publishers.get(0).name : (game.genres.size() > 0 ? game.genres.get(0).name : &quot;&quot;)}"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:maxLines="1"
-                        android:ellipsize="end"
-                        tools:text="Marvel Studios" />
-                </LinearLayout>
+                    tools:text="May 12, 2023" />
+                
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- Rating badge -->

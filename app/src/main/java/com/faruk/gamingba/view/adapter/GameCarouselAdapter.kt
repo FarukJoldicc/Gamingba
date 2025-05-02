@@ -1,5 +1,6 @@
 package com.faruk.gamingba.view.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
@@ -13,11 +14,14 @@ import com.faruk.gamingba.R
 import com.faruk.gamingba.databinding.ItemGameCarouselBinding
 import com.faruk.gamingba.model.data.Game
 
+private const val TAG = "GameCarouselAdapter"
+
 class GameCarouselAdapter(
     private val onGameClicked: (Game) -> Unit
 ) : ListAdapter<Game, GameCarouselAdapter.GameViewHolder>(GameDiffCallback()) {
 
     private var itemWidth: Int = ViewGroup.LayoutParams.MATCH_PARENT
+    private val standardMargin = 16 // Standard gap between items
 
     fun setItemWidth(width: Int) {
         this.itemWidth = width
@@ -31,29 +35,42 @@ class GameCarouselAdapter(
             false
         )
         
-        // Apply width to the root view
-        val layoutParams = MarginLayoutParams(itemWidth, binding.root.layoutParams.height)
-        val horizontalMargin = (parent.width - itemWidth) / 2
-        if (horizontalMargin > 0) {
-            // For first and last item, add extra margin for centering
-            when (itemCount) {
-                1 -> {
-                    layoutParams.leftMargin = horizontalMargin
-                    layoutParams.rightMargin = horizontalMargin
-                }
-            }
-        }
-        binding.root.layoutParams = layoutParams
-        
         return GameViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: GameViewHolder, position: Int) {
         holder.bind(getItem(position))
+        
+        // Apply margins based on position
+        val layoutParams = holder.binding.root.layoutParams as MarginLayoutParams
+        
+        // Reset margins first
+        layoutParams.leftMargin = 0
+        layoutParams.rightMargin = 0
+        
+        when (position) {
+            0 -> {
+                // First item: no left margin, standard right margin
+                layoutParams.rightMargin = standardMargin
+            }
+            itemCount - 1 -> {
+                // Last item: standard left margin, no right margin
+                layoutParams.leftMargin = standardMargin
+            }
+            else -> {
+                // Middle items: standard left margin, standard right margin
+                layoutParams.leftMargin = standardMargin
+                layoutParams.rightMargin = standardMargin
+            }
+        }
+        
+        // Apply width
+        layoutParams.width = itemWidth
+        holder.binding.root.layoutParams = layoutParams
     }
 
     inner class GameViewHolder(
-        private val binding: ItemGameCarouselBinding
+        val binding: ItemGameCarouselBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         init {

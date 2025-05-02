@@ -101,3 +101,42 @@ fun setRatingText(textView: TextView, rating: Float) {
     val formattedRating = String.format("%.1f", rating)
     textView.text = formattedRating
 }
+
+@BindingAdapter("releaseDateText")
+fun setReleaseDateText(textView: TextView, dateString: String?) {
+    if (dateString.isNullOrEmpty()) {
+        textView.text = "TBA"
+        return
+    }
+    
+    try {
+        // Input format is "YYYY-MM-DD"
+        val parts = dateString.split("-")
+        if (parts.size == 3) {
+            val year = parts[0]
+            val month = when (parts[1]) {
+                "01" -> "Jan"
+                "02" -> "Feb"
+                "03" -> "Mar"
+                "04" -> "Apr"
+                "05" -> "May"
+                "06" -> "Jun"
+                "07" -> "Jul"
+                "08" -> "Aug"
+                "09" -> "Sep"
+                "10" -> "Oct"
+                "11" -> "Nov"
+                "12" -> "Dec"
+                else -> parts[1]
+            }
+            val day = parts[2].toIntOrNull()?.toString() ?: parts[2]
+            
+            // Format as "MMM DD, YYYY"
+            textView.text = "$month $day, $year"
+        } else {
+            textView.text = dateString
+        }
+    } catch (e: Exception) {
+        textView.text = dateString
+    }
+}
